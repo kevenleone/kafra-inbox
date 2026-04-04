@@ -16,6 +16,8 @@ export function startSmtpServer(
 ): Promise<InstanceType<typeof SMTPServer>> {
     return new Promise((resolve, reject) => {
         if (globalThis.__smtpServer) {
+            console.log(`[SMTP] Listening on port ${SMTP_PORT}`);
+
             return resolve(globalThis.__smtpServer);
         }
 

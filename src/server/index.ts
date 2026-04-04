@@ -1,3 +1,4 @@
+import pkg from "../../package.json";
 import index from "../client/index.html";
 import type { WsMessage } from "../shared/types";
 import {
@@ -83,7 +84,7 @@ console.log(`
 |_|\\_\\__,_|_| |_|  \\__,_\\____/ |_| |_|_.__/ \\___/_/\\_\\
 `);
 
-console.log("[SERVER] Kafra Inbox started");
+console.log("[SERVER] Kafra Inbox", pkg.version);
 console.log(`[HTTP] Listening on http://localhost:${server.port}`);
 
 startSmtpServer(broadcast).catch(() =>

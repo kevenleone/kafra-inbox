@@ -1,0 +1,62 @@
+{
+    "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/crates/oxc_linter/src/rules.rs",
+    "plugins": ["react", "react-hooks", "typescript", "unicorn", "import"],
+    "env": {
+        "browser": true,
+        "es2022": true,
+        "node": true
+    },
+    "globals": {},
+    "rules": {
+        "no-console": "warn",
+        "no-debugger": "error",
+        "no-unused-vars": "off",
+        "eqeqeq": ["error", "always"],
+        "no-var": "error",
+
+        "typescript/no-unused-vars": [
+            "error",
+            { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+        ],
+        "typescript/no-explicit-any": "warn",
+        "typescript/consistent-type-imports": [
+            "error",
+            { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
+        ],
+        "typescript/no-non-null-assertion": "warn",
+
+        "react/jsx-key": "error",
+        "react/no-unknown-property": "error",
+        "react/react-in-jsx-scope": "off",
+        "react/self-closing-comp": "error",
+
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": "warn",
+
+        "import/no-duplicates": "error",
+        "import/no-self-import": "error",
+
+        "sort-imports": [
+            "error",
+            {
+                "ignoreCase": true,
+                "ignoreDeclarationSort": true,
+                "ignoreMemberSort": false,
+                "memberSyntaxSortOrder": ["none", "all", "multiple", "single"],
+                "allowSeparatedGroups": true
+            }
+        ],
+
+        "unicorn/no-array-for-each": "warn",
+        "unicorn/prefer-node-protocol": "warn"
+    },
+    "ignorePatterns": [
+        "node_modules",
+        "dist",
+        "build",
+        ".tanstack",
+        "generated",
+        "*.config.*",
+        "*.d.ts"
+    ]
+}

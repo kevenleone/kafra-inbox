@@ -1,6 +1,6 @@
 # KafraInbox
 
-A local email sandbox for testing — captures outgoing emails from your apps without sending them, similar to Mailtrap.
+A local email sandbox for development — captures outgoing emails from your apps without sending them, similar to Mailtrap.
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ bun install
 bun dev
 ```
 
-Open **http://localhost:3000** in your browser.
+Open **http://localhost:3134** in your browser.
 
 ## SMTP Configuration
 
@@ -23,6 +23,13 @@ password: (none)
 security: none / STARTTLS disabled
 ```
 
+Both ports are configurable via environment variables:
+
+| Variable               | Default |
+| ---------------------- | ------- |
+| `KAFRAINBOX_HTTP_PORT` | `3134`  |
+| `KAFRAINBOX_SMTP_PORT` | `1025`  |
+
 ## Testing
 
 Send a test email to verify everything works:
@@ -33,46 +40,53 @@ bun test-email.ts
 
 ## Scripts
 
-| Command     | Description                      |
-| ----------- | -------------------------------- |
-| `bun dev`   | Start API + SMTP with hot-reload |
-| `bun start` | Start without hot-reload         |
-| `bun build` | Bundle frontend to `dist/`       |
+| Command     | Description                     |
+| ----------- | ------------------------------- |
+| `bun dev`   | Start with hot-reload (`--hot`) |
+| `bun start` | Start without hot-reload        |
+| `bun build` | Bundle frontend to `dist/`      |
 
 ## Project Structure
 
 ```
-KafraInbox/
-├── server/
-│   ├── index.ts      # Bun HTTP + WebSocket server (port 3000)
-│   ├── smtp.ts       # SMTP server (port 1025) — captures emails
-│   └── storage.ts    # In-memory storage (swap for SQLite later)
+src/
 ├── client/
-│   ├── index.html    # HTML entry point
-│   ├── App.tsx       # Main React app
+│   ├── index.html              # HTML entry point
+│   ├── index.css               # Global styles
+│   ├── App.tsx                 # Main React app
 │   └── components/
-│       ├── Sidebar.tsx      # Inbox list + SMTP config panel
-│       ├── EmailList.tsx    # Searchable email list
-│       └── EmailViewer.tsx  # Email detail with HTML/Text/Raw/Headers tabs
-├── shared/
-│   └── types.ts      # Shared TypeScript types
-└── test-email.ts     # Send a test email via raw SMTP
+│       ├── EmailList.tsx       # Searchable email list
+│       ├── EmailViewer.tsx     # Email detail (HTML/Text/Raw/Headers tabs)
+│       ├── Settings.tsx        # App settings panel
+│       └── Sidebar.tsx         # Inbox list + SMTP config panel
+├── server/
+│   ├── index.ts                # Bun HTTP + WebSocket server
+│   ├── types.ts                # Server-side TypeScript types
+│   ├── http/
+│   │   ├── emails.ts           # GET /api/emails, DELETE /api/emails
+│   │   ├── email.ts            # /api/emails/:id routes
+│   │   ├── inboxes.ts          # /api/inboxes routes
+│   │   └── rules.ts            # /api/rules routes
+│   ├── persistence/
+│   │   └── storage.ts          # SQLite storage (bun:sqlite)
+│   ├── smtp/
+│   │   ├── index.ts            # SMTP server lifecycle
+│   │   └── smtp-server.ts      # SMTP server creation + email parsing
+│   └── utils/
+│       ├── environment.ts      # Validated env vars (valibot)
+│       └── index.ts            # Shared utilities
+└── shared/
+    └── types.ts                # Types shared between client and server
 ```
 
 ## Features
 
-- **SMTP capture** — accepts all mail on port 1025, no auth required
+- **SMTP capture** — accepts all mail on the configured port, no auth required
 - **Real-time updates** — new emails appear instantly via WebSocket
 - **Email viewer** — HTML (sandboxed iframe), Text, Raw MIME, Headers tabs
 - **Attachments** — listed with download support; inline CID images resolved
-- **Multiple inboxes** — create/delete additional inboxes
+- **Multiple inboxes** — create/delete additional inboxes with per-inbox SMTP credentials
 - **Search** — filter by subject, sender, recipient, or body
-- **Error simulation** — add rules to reject recipients or add delays
-- **Copy SMTP config** — one-click copy of SMTP settings
-
-## Replacing In-Memory Storage with SQLite
-
-`server/storage.ts` exports an `IStorage` interface. To swap in SQLite:
-
-1. Create `server/sqlite-storage.ts` implementing `IStorage` using `bun:sqlite`
-2. Replace the `export const storage = new MemoryStorage()` line with your new class
+- **Error simulation** — add rules to reject recipients or introduce delays
+- **SQLite persistence** — emails and inboxes survive server restarts
+- **Configurable ports** — HTTP and SMTP ports set via environment variables

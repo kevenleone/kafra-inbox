@@ -67,13 +67,7 @@ function CopyButton({ text }: { text: string }) {
     );
 }
 
-function SmtpConfigBlock({
-    smtp,
-    inboxName,
-}: {
-    smtp: SmtpConfig;
-    inboxName: string;
-}) {
+function SmtpConfigBlock({ smtp }: { smtp: SmtpConfig }) {
     const configText = [
         `host: localhost`,
         `port: ${smtp.port}`,

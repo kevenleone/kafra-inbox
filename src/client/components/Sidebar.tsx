@@ -1,4 +1,3 @@
-import React from "react";
 import type { Inbox } from "../../shared/types";
 
 interface SidebarProps {

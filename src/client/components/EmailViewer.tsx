@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Attachment, Email } from "../../shared/types";
 
 type Tab = "html" | "text" | "raw" | "headers";

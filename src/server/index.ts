@@ -1,9 +1,9 @@
+import { randomBytes, randomUUID } from "node:crypto";
+import type { SMTPServer } from "smtp-server";
+import index from "../client/index.html";
+import type { Email, Inbox, SmtpConfig, WsMessage } from "../shared/types";
 import { createSMTPServer } from "./smtp";
 import { storage } from "./storage";
-import { randomBytes, randomUUID } from "crypto";
-import type { Email, Inbox, SmtpConfig, WsMessage } from "../shared/types";
-import index from "../client/index.html";
-import type { SMTPServer } from "smtp-server";
 
 const HTTP_PORT = 3000;
 const SMTP_PORT = 1025;

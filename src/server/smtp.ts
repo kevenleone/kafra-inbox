@@ -4,12 +4,13 @@
  * The default inbox accepts anonymous traffic. Additional inboxes are routed
  * by SMTP auth username and password.
  */
-import { SMTPServer } from "smtp-server";
-import { simpleParser } from "mailparser";
 import type { AddressObject } from "mailparser";
-import { randomUUID } from "crypto";
-import { storage } from "./storage";
+import { simpleParser } from "mailparser";
+import { randomUUID } from "node:crypto";
+import { SMTPServer } from "smtp-server";
+
 import type { Email } from "../shared/types";
+import { storage } from "./storage";
 
 // Flatten mailparser AddressObject(s) into plain email strings
 function extractAddresses(

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { Email, Inbox, WsMessage } from "../shared/types";
-import { Sidebar } from "./components/Sidebar";
 import { EmailList } from "./components/EmailList";
 import { EmailViewer } from "./components/EmailViewer";
 import { Settings } from "./components/Settings";
+import { Sidebar } from "./components/Sidebar";
 
 type View = "mail" | "settings";
 
@@ -50,8 +50,12 @@ function App() {
 
                 if (msg.type === "new_email") {
                     setEmails((prev) => {
-                        if (msg.email.inboxId !== selectedInboxIdRef.current) return prev;
-                        if (searchRef.current && !matchesSearch(msg.email, searchRef.current))
+                        if (msg.email.inboxId !== selectedInboxIdRef.current)
+                            return prev;
+                        if (
+                            searchRef.current &&
+                            !matchesSearch(msg.email, searchRef.current)
+                        )
                             return prev;
                         return [msg.email, ...prev];
                     });

@@ -2,6 +2,10 @@
 
 A local email sandbox for development — captures outgoing emails from your apps without sending them, similar to Mailtrap.
 
+<p align="center">
+    <img style="border-radius: 5px" src="./assets/kafrainbox.png" width="250"  />
+</p>
+
 ## Quick Start
 
 ```bash
@@ -89,4 +93,3 @@ src/
 - **Search** — filter by subject, sender, recipient, or body
 - **Error simulation** — add rules to reject recipients or introduce delays
 - **SQLite persistence** — emails and inboxes survive server restarts
-- **Configurable ports** — HTTP and SMTP ports set via environment variables

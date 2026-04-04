@@ -33,11 +33,11 @@ bun test-email.ts
 
 ## Scripts
 
-| Command       | Description                          |
-|---------------|--------------------------------------|
-| `bun dev`     | Start API + SMTP with hot-reload     |
-| `bun start`   | Start without hot-reload             |
-| `bun build`   | Bundle frontend to `dist/`           |
+| Command     | Description                      |
+| ----------- | -------------------------------- |
+| `bun dev`   | Start API + SMTP with hot-reload |
+| `bun start` | Start without hot-reload         |
+| `bun build` | Bundle frontend to `dist/`       |
 
 ## Project Structure
 

@@ -11,7 +11,9 @@ type View = "mail" | "settings";
 function App() {
     const [view, setView] = useState<View>("mail");
     const [inboxes, setInboxes] = useState<Inbox[]>([]);
-    const [selectedInboxId, setSelectedInboxId] = useState("default");
+    const [selectedInboxId, setSelectedInboxId] = useState(
+        () => new URLSearchParams(location.search).get("inbox") ?? "default",
+    );
     const [emails, setEmails] = useState<Email[]>([]);
     const [total, setTotal] = useState(0);
     const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
@@ -25,6 +27,9 @@ function App() {
 
     useEffect(() => {
         selectedInboxIdRef.current = selectedInboxId;
+        const params = new URLSearchParams(location.search);
+        params.set("inbox", selectedInboxId);
+        history.replaceState(null, "", `?${params}`);
     }, [selectedInboxId]);
 
     useEffect(() => {

@@ -9,22 +9,25 @@ import { simpleParser } from "mailparser";
 import { randomUUID } from "node:crypto";
 import { SMTPServer } from "smtp-server";
 
-import type { Email } from "../shared/types";
-import { storage } from "./persistence/storage";
+import type { Email } from "../../shared/types";
+import { storage } from "../persistence/storage";
 
-// Flatten mailparser AddressObject(s) into plain email strings
 function extractAddresses(
     field: AddressObject | AddressObject[] | undefined,
 ): string[] {
-    if (!field) return [];
-    const arr = Array.isArray(field) ? field : [field];
-    return arr.flatMap(
-        (a) =>
-            (a.value ?? [])
-                .map((v) =>
-                    v.address
-                        ? `${v.name ? v.name + " " : ""}<${v.address}>`.trim()
-                        : v.name,
+    if (!field) {
+        return [];
+    }
+
+    const addresses = Array.isArray(field) ? field : [field];
+
+    return addresses.flatMap(
+        (address) =>
+            (address.value ?? [])
+                .map((value) =>
+                    value.address
+                        ? `${value.name ? value.name + " " : ""}<${value.address}>`.trim()
+                        : value.name,
                 )
                 .filter(Boolean) as string[],
     );
@@ -33,8 +36,8 @@ function extractAddresses(
 export function createSMTPServer(onEmail: (email: Email) => void) {
     const server = new SMTPServer({
         authOptional: true,
-        secure: false,
         disabledCommands: ["STARTTLS"],
+        secure: false,
 
         onAuth(auth, _session, callback) {
             if (!auth.username) {
@@ -42,6 +45,7 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
             }
 
             const inbox = storage.getInboxByUsername(auth.username);
+
             if (!inbox || inbox.smtp.password !== auth.password) {
                 return callback(new Error("Invalid credentials"));
             }
@@ -177,6 +181,7 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                     };
 
                     storage.addEmail(email);
+
                     onEmail(email);
 
                     console.log(
@@ -201,8 +206,8 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
         logger: false,
     });
 
-    server.on("error", (err) => {
-        console.error("[SMTP] Server error:", err);
+    server.on("error", (error) => {
+        console.error("[SMTP] Server error:", error);
     });
 
     return server;

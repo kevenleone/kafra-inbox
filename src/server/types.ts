@@ -1,4 +1,10 @@
-import type { Email, Inbox, SmtpConfig, SmtpRule } from "../shared/types";
+import type {
+    Email,
+    Inbox,
+    SmtpConfig,
+    SmtpRule,
+    WsMessage,
+} from "../shared/types";
 
 export interface EmailRow {
     attachments: string;
@@ -58,3 +64,7 @@ export interface RuleRow {
     pattern: string;
     type: string;
 }
+
+export type HTTPHandler = {
+    broadcast: (message: WsMessage) => void;
+};

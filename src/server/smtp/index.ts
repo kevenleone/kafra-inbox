@@ -5,14 +5,18 @@ import { createSMTPServer } from "./smtp-server";
 
 const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
 
-let smtpServer: InstanceType<typeof SMTPServer> | null = null;
+declare global {
+    var __smtpServer: InstanceType<typeof SMTPServer> | null;
+}
+
+globalThis.__smtpServer ??= null;
 
 export function startSmtpServer(
     broadcast: (msg: WsMessage) => void,
-): Promise<void> {
+): Promise<InstanceType<typeof SMTPServer>> {
     return new Promise((resolve, reject) => {
-        if (smtpServer) {
-            return resolve();
+        if (globalThis.__smtpServer) {
+            return resolve(globalThis.__smtpServer);
         }
 
         const server = createSMTPServer((email: Email) => {
@@ -31,9 +35,9 @@ export function startSmtpServer(
 
             console.log(`[SMTP] Listening on port ${SMTP_PORT}`);
 
-            smtpServer = server;
+            globalThis.__smtpServer = server;
 
-            resolve();
+            resolve(server);
         });
     });
 }

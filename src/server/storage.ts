@@ -2,25 +2,25 @@ import type { Email, Inbox, SmtpConfig, SmtpRule } from "../shared/types";
 
 export interface IStorage {
     addEmail(email: Email): void;
+    addInbox(inbox: Inbox): void;
+    addRule(rule: SmtpRule): void;
+    clearInbox(inboxId: string): number;
+    deleteEmail(id: string): boolean;
+    deleteInbox(id: string): boolean;
+    deleteRule(id: string): void;
+    getEmail(id: string): Email | undefined;
     getEmails(
         page: number,
         pageSize: number,
         inboxId?: string,
         search?: string,
     ): { data: Email[]; total: number };
-    getEmail(id: string): Email | undefined;
-    deleteEmail(id: string): boolean;
-    clearInbox(inboxId: string): number;
     getInbox(id: string): Inbox | undefined;
-    getInboxes(): Inbox[];
     getInboxByUsername(username: string): Inbox | undefined;
-    addInbox(inbox: Inbox): void;
-    updateInboxSmtp(id: string, smtp: SmtpConfig): Inbox | undefined;
-    deleteInbox(id: string): boolean;
-    markAsRead(id: string): void;
+    getInboxes(): Inbox[];
     getRules(): SmtpRule[];
-    addRule(rule: SmtpRule): void;
-    deleteRule(id: string): void;
+    markAsRead(id: string): void;
+    updateInboxSmtp(id: string, smtp: SmtpConfig): Inbox | undefined;
 }
 
 class MemoryStorage implements IStorage {
@@ -114,21 +114,26 @@ class MemoryStorage implements IStorage {
     }
 
     clearInbox(inboxId = "default"): number {
-        const toDelete = this.emailOrder.filter(
+        const emailsToDelete = this.emailOrder.filter(
             (id) => this.emails.get(id)?.inboxId === inboxId,
         );
-        toDelete.forEach((id) => this.emails.delete(id));
+
+        for (const id of emailsToDelete) {
+            this.emails.delete(id);
+        }
+
         this.emailOrder = this.emailOrder.filter(
-            (id) => !toDelete.includes(id),
+            (id) => !emailsToDelete.includes(id),
         );
 
         const inbox = this.inboxes.get(inboxId);
+
         if (inbox) {
             inbox.emailCount = 0;
             inbox.unreadCount = 0;
         }
 
-        return toDelete.length;
+        return emailsToDelete.length;
     }
 
     getInbox(id: string): Inbox | undefined {

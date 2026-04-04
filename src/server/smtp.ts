@@ -115,11 +115,25 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                     const parsed = await simpleParser(rawBuffer);
 
                     const headers: Record<string, string> = {};
-                    parsed.headers.forEach((value, key) => {
+                    const stringify = (v: unknown): string => {
+                        if (typeof v === "string") return v;
+
+                        if (
+                            typeof v === "object" &&
+                            v !== null &&
+                            "text" in v
+                        ) {
+                            return String((v as { text: unknown }).text);
+                        }
+
+                        return String(v);
+                    };
+
+                    for (const [key, value] of parsed.headers) {
                         headers[key] = Array.isArray(value)
-                            ? value.join(", ")
-                            : String(value);
-                    });
+                            ? value.map(stringify).join(", ")
+                            : stringify(value);
+                    }
 
                     const email: Email = {
                         id: randomUUID(),
@@ -168,6 +182,7 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                     callback();
                 } catch (err) {
                     console.error("[SMTP] Failed to parse email:", err);
+
                     callback(err as Error);
                 }
             });

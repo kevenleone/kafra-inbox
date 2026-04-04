@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 import { SMTPServer } from "smtp-server";
 
 import type { Email } from "../shared/types";
-import { storage } from "./storage";
+import { storage } from "./persistence/storage";
 
 // Flatten mailparser AddressObject(s) into plain email strings
 function extractAddresses(
@@ -45,16 +45,19 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
             if (!inbox || inbox.smtp.password !== auth.password) {
                 return callback(new Error("Invalid credentials"));
             }
+
             return callback(null, { user: inbox.id });
         },
 
         onConnect(session, callback) {
             console.log(`[SMTP] New connection from ${session.remoteAddress}`);
+
             callback();
         },
 
         onMailFrom(address, _session, callback) {
             console.log(`[SMTP] MAIL FROM: ${address.address}`);
+
             callback();
         },
 
@@ -179,6 +182,7 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                     console.log(
                         `[SMTP:${inbox.id}] Stored email ${email.id} — "${email.subject}" (${email.size} bytes)`,
                     );
+
                     callback();
                 } catch (err) {
                     console.error("[SMTP] Failed to parse email:", err);
@@ -189,6 +193,7 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
 
             stream.on("error", (err) => {
                 console.error("[SMTP] Stream error:", err);
+
                 callback(err);
             });
         },

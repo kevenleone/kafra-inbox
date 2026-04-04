@@ -1,20 +1,25 @@
 import React, { useState } from "react";
+import {
+    AlertCircle,
+    ArrowLeft,
+    Check,
+    Copy,
+    Mail,
+    Plus,
+    Trash2,
+} from "lucide-react";
 import type { Inbox, SmtpConfig } from "../../shared/types";
 
 interface SettingsProps {
     inboxes: Inbox[];
+    onBack: () => void;
     onCreateInbox: (name: string) => Promise<{ error?: string }>;
     onDeleteInbox: (id: string) => void;
-    onBack: () => void;
 }
 
 interface InboxFormState {
     name: string;
 }
-
-const emptyForm = (): InboxFormState => ({
-    name: "",
-});
 
 function CopyButton({ text }: { text: string }) {
     const [copied, setCopied] = useState(false);
@@ -30,36 +35,12 @@ function CopyButton({ text }: { text: string }) {
         >
             {copied ? (
                 <>
-                    <svg
-                        className="w-3.5 h-3.5 text-green-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                        />
-                    </svg>
+                    <Check className="w-3.5 h-3.5 text-green-500" />
                     <span className="text-green-600">Copied</span>
                 </>
             ) : (
                 <>
-                    <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                    </svg>
+                    <Copy className="w-3.5 h-3.5" />
                     Copy
                 </>
             )}
@@ -130,19 +111,7 @@ function InboxCard({
                 <div>
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                            <svg
-                                className="w-4 h-4 text-blue-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                />
-                            </svg>
+                            <Mail className="w-4 h-4 text-blue-500" />
                         </div>
                         <div>
                             <h3 className="text-sm font-semibold text-slate-800">
@@ -164,19 +133,7 @@ function InboxCard({
                             onClick={() => setConfirmDelete(true)}
                             className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-red-50 transition-colors"
                         >
-                            <svg
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                            </svg>
+                            <Trash2 className="w-3.5 h-3.5" />
                             Delete
                         </button>
                     )}
@@ -200,7 +157,7 @@ function InboxCard({
                 </div>
             </div>
 
-            <SmtpConfigBlock smtp={inbox.smtp} inboxName={inbox.name} />
+            <SmtpConfigBlock smtp={inbox.smtp} />
         </div>
     );
 }
@@ -212,7 +169,10 @@ function NewInboxForm({
     onSubmit: (name: string) => Promise<{ error?: string }>;
     onCancel: () => void;
 }) {
-    const [form, setForm] = useState<InboxFormState>(emptyForm());
+    const [form, setForm] = useState<InboxFormState>({
+        name: "",
+    });
+
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
 
@@ -234,19 +194,7 @@ function NewInboxForm({
         <div className="bg-white border-2 border-blue-200 rounded-xl p-5">
             <h3 className="text-sm font-semibold text-slate-800 mb-4 flex items-center gap-2">
                 <div className="w-5 h-5 rounded bg-blue-600 flex items-center justify-center">
-                    <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
+                    <Plus className="w-3 h-3 text-white" />
                 </div>
                 New Inbox
             </h3>
@@ -276,19 +224,7 @@ function NewInboxForm({
 
                 {error && (
                     <p className="text-xs text-red-600 flex items-center gap-1">
-                        <svg
-                            className="w-3.5 h-3.5 flex-shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
+                        <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                         {error}
                     </p>
                 )}
@@ -338,19 +274,7 @@ export function Settings({
                         className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
                         title="Back"
                     >
-                        <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 19l-7-7 7-7"
-                            />
-                        </svg>
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <h1 className="text-base font-semibold text-slate-900">
@@ -366,19 +290,7 @@ export function Settings({
                         onClick={() => setAddingNew(true)}
                         className="flex items-center gap-1.5 text-sm bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-lg transition-colors font-medium"
                     >
-                        <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                            />
-                        </svg>
+                        <Plus className="w-4 h-4" />
                         New Inbox
                     </button>
                 )}

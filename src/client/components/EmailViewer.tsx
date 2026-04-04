@@ -1,3 +1,4 @@
+import { Download, Mail, Paperclip } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Attachment, Email } from "../../shared/types";
 
@@ -63,33 +64,32 @@ function HtmlFrame({
 
 function downloadAttachment(emailId: string, index: number, filename: string) {
     const a = document.createElement("a");
+
     a.href = `/api/emails/${emailId}/attachments/${index}`;
     a.download = filename;
     document.body.appendChild(a);
+
     a.click();
+
     document.body.removeChild(a);
 }
 
+const tabs: { id: Tab; label: string }[] = [
+    { id: "html", label: "HTML" },
+    { id: "text", label: "Text" },
+    { id: "raw", label: "Raw" },
+    { id: "headers", label: "Headers" },
+];
+
 export function EmailViewer({ email }: EmailViewerProps) {
     const [activeTab, setActiveTab] = useState<Tab>("html");
+
     useEffect(() => setActiveTab("html"), [email?.id]);
 
     if (!email) {
         return (
             <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50">
-                <svg
-                    className="w-14 h-14 mb-4 opacity-20"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                </svg>
+                <Mail className="w-14 h-14 mb-4 opacity-20" strokeWidth={1} />
                 <p className="text-sm font-medium">
                     Select an email to preview
                 </p>
@@ -99,13 +99,6 @@ export function EmailViewer({ email }: EmailViewerProps) {
             </div>
         );
     }
-
-    const tabs: { id: Tab; label: string }[] = [
-        { id: "html", label: "HTML" },
-        { id: "text", label: "Text" },
-        { id: "raw", label: "Raw" },
-        { id: "headers", label: "Headers" },
-    ];
 
     const hasAttachments = email.attachments.length > 0;
 
@@ -126,19 +119,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                             title="Download raw email"
                             className="p-1 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                         >
-                            <svg
-                                className="w-3.5 h-3.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                />
-                            </svg>
+                            <Download className="w-3.5 h-3.5" />
                         </button>
                     </div>
                 </div>
@@ -169,23 +150,12 @@ export function EmailViewer({ email }: EmailViewerProps) {
                     <span className="text-xs text-gray-400">
                         {formatSize(email.size)}
                     </span>
+
                     {hasAttachments && (
                         <>
                             <span className="text-gray-200">·</span>
                             <span className="flex items-center gap-1 text-xs text-gray-400">
-                                <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                                    />
-                                </svg>
+                                <Paperclip className="w-3 h-3" />
                                 {email.attachments.length} Attachment
                                 {email.attachments.length !== 1 ? "s" : ""}
                             </span>
@@ -194,7 +164,6 @@ export function EmailViewer({ email }: EmailViewerProps) {
                 </div>
             </div>
 
-            {/* Tab bar */}
             <div className="px-6 border-b border-gray-100 bg-white">
                 <nav className="flex -mb-px">
                     {tabs.map((tab) => (
@@ -213,7 +182,6 @@ export function EmailViewer({ email }: EmailViewerProps) {
                 </nav>
             </div>
 
-            {/* Tab content */}
             <div className="flex-1 overflow-auto min-h-0">
                 {activeTab === "html" &&
                     (email.html ? (
@@ -224,6 +192,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                     ) : (
                         <NoContent message="No HTML body" />
                     ))}
+
                 {activeTab === "text" &&
                     (email.text ? (
                         <pre className="raw-view p-6 text-sm text-slate-700">
@@ -262,13 +231,13 @@ export function EmailViewer({ email }: EmailViewerProps) {
                 )}
             </div>
 
-            {/* Attachments footer */}
             {hasAttachments && (
                 <div className="border-t border-gray-100 bg-gray-50 px-6 py-3">
                     <p className="text-xs font-medium text-gray-500 mb-2">
                         {email.attachments.length} Attachment
                         {email.attachments.length !== 1 ? "s" : ""}
                     </p>
+
                     <ul className="flex flex-col gap-1.5">
                         {email.attachments.map((att, i) => (
                             <li
@@ -277,19 +246,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                             >
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     <div className="w-7 h-7 rounded bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
-                                        <svg
-                                            className="w-3.5 h-3.5 text-blue-500"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                                            />
-                                        </svg>
+                                        <Paperclip className="w-3.5 h-3.5 text-blue-500" />
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-xs font-medium text-slate-700 truncate">
@@ -311,19 +268,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                                     }
                                     className="ml-3 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 flex-shrink-0"
                                 >
-                                    <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                                        />
-                                    </svg>
+                                    <Download className="w-3.5 h-3.5" />
                                     Download
                                 </button>
                             </li>

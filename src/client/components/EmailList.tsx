@@ -41,6 +41,10 @@ function formatSize(bytes: number): string {
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function unquote(text: string) {
+    return text.replaceAll('"', "");
+}
+
 function extractDisplayName(addr: string): string {
     const match = addr.match(/^([^<]+)<[^>]+>/);
     if (match) return match[1]!.trim();
@@ -66,7 +70,7 @@ export function EmailList({
     inboxName,
 }: EmailListProps) {
     return (
-        <div className="w-80 flex-shrink-0 border-r border-gray-200 flex flex-col h-screen bg-white">
+        <div className="w-96 flex-shrink-0 border-r border-gray-200 flex flex-col h-screen bg-white">
             {/* Header: inbox name + actions */}
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <h1 className="text-sm font-semibold text-slate-800 truncate">
@@ -155,6 +159,7 @@ export function EmailList({
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                         />
                     </svg>
+
                     <input
                         type="text"
                         placeholder="Search…"
@@ -164,6 +169,7 @@ export function EmailList({
                         }
                         className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-100 rounded-md border border-transparent focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder-gray-400"
                     />
+
                     {search && (
                         <button
                             onClick={() => onSearch("")}
@@ -204,11 +210,14 @@ export function EmailList({
                                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                             />
                         </svg>
+
                         <p className="text-sm font-medium text-gray-500">
                             No emails yet
                         </p>
+
                         <p className="text-xs mt-1 text-gray-400">
-                            Send to localhost:1025
+                            Send a test email or configure your app to use this
+                            inbox
                         </p>
                     </li>
                 )}
@@ -226,17 +235,20 @@ export function EmailList({
                             }`}
                         >
                             {/* Unread dot */}
+
                             {!email.isRead && !isSelected && (
-                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                             )}
 
-                            <div className="px-4 py-3 pl-5">
+                            <div className="px-4 py-3 pl-6">
                                 {/* Sender + time */}
                                 <div className="flex items-baseline justify-between gap-2 mb-0.5">
                                     <span
                                         className={`text-xs truncate ${!email.isRead ? "font-semibold text-slate-900" : "text-slate-600"}`}
                                     >
-                                        {extractDisplayName(email.from)}
+                                        {unquote(
+                                            extractDisplayName(email.from),
+                                        )}
                                     </span>
                                     <span className="text-[11px] text-gray-400 flex-shrink-0 tabular-nums">
                                         {formatTime(email.timestamp)}
@@ -277,7 +289,6 @@ export function EmailList({
                                     </div>
                                 </div>
                             </div>
-
                             {/* Delete button (hover) */}
                             <button
                                 onClick={(e) => {

@@ -94,7 +94,7 @@ export function EmailViewer({ email }: EmailViewerProps) {
                     Select an email to preview
                 </p>
                 <p className="text-xs mt-1 text-gray-400">
-                    Or send one to localhost:1025
+                    Choose an email from the list to preview
                 </p>
             </div>
         );

@@ -20,6 +20,16 @@ function App() {
     const [connected, setConnected] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
+    const selectedInboxIdRef = useRef(selectedInboxId);
+    const searchRef = useRef(search);
+
+    useEffect(() => {
+        selectedInboxIdRef.current = selectedInboxId;
+    }, [selectedInboxId]);
+
+    useEffect(() => {
+        searchRef.current = search;
+    }, [search]);
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
     useEffect(() => {
@@ -35,8 +45,8 @@ function App() {
 
                 if (msg.type === "new_email") {
                     setEmails((prev) => {
-                        if (msg.email.inboxId !== selectedInboxId) return prev;
-                        if (search && !matchesSearch(msg.email, search))
+                        if (msg.email.inboxId !== selectedInboxIdRef.current) return prev;
+                        if (searchRef.current && !matchesSearch(msg.email, searchRef.current))
                             return prev;
                         return [msg.email, ...prev];
                     });
@@ -59,7 +69,7 @@ function App() {
                         sel?.id === msg.id ? null : sel,
                     );
                 } else if (msg.type === "inbox_cleared") {
-                    if (msg.inboxId === selectedInboxId) {
+                    if (msg.inboxId === selectedInboxIdRef.current) {
                         setEmails([]);
                         setTotal(0);
                         setSelectedEmail(null);

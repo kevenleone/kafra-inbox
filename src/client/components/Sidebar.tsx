@@ -20,8 +20,8 @@ export function Sidebar({
 }: SidebarProps) {
     return (
         <aside
-            className="w-64 flex-shrink-0 flex flex-col h-screen"
-            style={{ background: "#111118" }}
+            className="w-64 px-2 pt-2 flex-shrink-0 flex flex-col h-screen"
+            style={{ background: "#1d1d24ff" }}
         >
             {/* Logo */}
             <div className="px-4 py-4 flex items-center gap-2.5">
@@ -40,14 +40,15 @@ export function Sidebar({
                         />
                     </svg>
                 </div>
-                <span className="font-semibold text-white text-base tracking-tight">
+
+                <span className="font-bold text-xl text-white text-base tracking-tight">
                     Mail4All
                 </span>
             </div>
 
             {/* Inboxes section */}
             <div className="flex-1 overflow-y-auto px-2 py-2">
-                <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest px-2 mb-1.5">
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2 mb-1.5">
                     Inboxes
                 </p>
 
@@ -80,7 +81,8 @@ export function Sidebar({
                                                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
                                             />
                                         </svg>
-                                        <span className="truncate">
+
+                                        <span className="truncate font-semibold">
                                             {inbox.name}
                                         </span>
                                     </div>

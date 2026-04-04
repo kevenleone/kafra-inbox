@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import {
     ChevronLeft,
     ChevronRight,
@@ -9,74 +10,34 @@ import {
 } from "lucide-react";
 import React from "react";
 
-import type { Email } from "../../shared/types";
+import type { Email } from "../../../shared/types";
+import { formatSize, formatTime } from "../../utils/format";
+import { extractDisplayName, extractEmail, unquote } from "../../utils/text";
 
 interface EmailListProps {
     emails: Email[];
-    total: number;
-    search: string;
-    onSearch: (q: string) => void;
-    selectedId: string | undefined;
-    onSelectEmail: (email: Email) => void;
-    onDeleteEmail: (id: string) => void;
-    onClearInbox: () => void;
-    loading: boolean;
     inboxName: string;
-}
-
-function formatTime(timestamp: string): string {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-
-    if (diffSec < 60) return "just now";
-    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
-    if (diffSec < 86400) {
-        return date.toLocaleTimeString(undefined, {
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    }
-    return date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-    });
-}
-
-function formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function unquote(text: string) {
-    return text.replaceAll('"', "");
-}
-
-function extractDisplayName(addr: string): string {
-    const match = addr.match(/^([^<]+)<[^>]+>/);
-    if (match) return match[1]!.trim();
-    const emailMatch = addr.match(/<([^>]+)>/);
-    return emailMatch ? emailMatch[1]! : addr;
-}
-
-function extractEmail(addr: string): string {
-    const match = addr.match(/<([^>]+)>/);
-    return match ? match[1]! : addr;
+    loading: boolean;
+    onClearInbox: () => void;
+    onDeleteEmail: (id: string) => void;
+    onSearch: (q: string) => void;
+    onSelectEmail: (email: Email) => void;
+    search: string;
+    selectedId: string | undefined;
+    total: number;
 }
 
 export function EmailList({
     emails,
-    total,
-    search,
-    onSearch,
-    selectedId,
-    onSelectEmail,
-    onDeleteEmail,
-    onClearInbox,
-    loading,
     inboxName,
+    loading,
+    onClearInbox,
+    onDeleteEmail,
+    onSearch,
+    onSelectEmail,
+    search,
+    selectedId,
+    total,
 }: EmailListProps) {
     return (
         <div className="w-96 flex-shrink-0 border-r border-gray-200 flex flex-col h-screen bg-white">
@@ -105,10 +66,12 @@ export function EmailList({
                             ? "Loading…"
                             : `${total} message${total !== 1 ? "s" : ""}`}
                     </span>
+
                     <div className="flex items-center gap-0.5">
                         <button className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors">
                             <ChevronLeft className="w-3.5 h-3.5" />
                         </button>
+
                         <button className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors">
                             <ChevronRight className="w-3.5 h-3.5" />
                         </button>
@@ -119,19 +82,19 @@ export function EmailList({
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
 
                     <input
-                        type="text"
+                        className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-100 rounded-md border border-transparent focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder-gray-400"
                         placeholder="Search…"
-                        value={search}
+                        type="text"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             onSearch(e.target.value)
                         }
-                        className="w-full pl-8 pr-7 py-1.5 text-xs bg-gray-100 rounded-md border border-transparent focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder-gray-400"
+                        value={search}
                     />
 
                     {search && (
                         <button
-                            onClick={() => onSearch("")}
                             className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            onClick={() => onSearch("")}
                         >
                             <X className="w-3 h-3" />
                         </button>
@@ -160,50 +123,64 @@ export function EmailList({
 
                 {emails.map((email) => {
                     const isSelected = selectedId === email.id;
+
                     return (
                         <li
+                            className={clsx(
+                                "group relative cursor-pointer transition-colors",
+                                {
+                                    "bg-blue-50 border-l-2 border-l-blue-500":
+                                        isSelected,
+                                    "hover:bg-gray-50 border-l-2 border-l-transparent":
+                                        !isSelected,
+                                },
+                            )}
                             key={email.id}
                             onClick={() => onSelectEmail(email)}
-                            className={`group relative cursor-pointer transition-colors ${
-                                isSelected
-                                    ? "bg-blue-50 border-l-2 border-l-blue-500"
-                                    : "hover:bg-gray-50 border-l-2 border-l-transparent"
-                            }`}
                         >
                             {!email.isRead && !isSelected && (
                                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                             )}
 
                             <div className="px-4 py-3 pl-6">
-                                {/* Sender + time */}
                                 <div className="flex items-baseline justify-between gap-2 mb-0.5">
                                     <span
-                                        className={`text-xs truncate ${!email.isRead ? "font-semibold text-slate-900" : "text-slate-600"}`}
+                                        className={clsx("text-xs truncate", {
+                                            "font-semibold text-slate-900":
+                                                !email.isRead,
+                                            "text-slate-600": email.isRead,
+                                        })}
                                     >
                                         {unquote(
                                             extractDisplayName(email.from),
                                         )}
                                     </span>
+
                                     <span className="text-[11px] text-gray-400 flex-shrink-0 tabular-nums">
                                         {formatTime(email.timestamp)}
                                     </span>
                                 </div>
 
                                 <p
-                                    className={`text-xs truncate mb-0.5 ${!email.isRead ? "font-medium text-slate-800" : "text-slate-500"}`}
+                                    className={clsx("text-xs truncate mb-0.5", {
+                                        "font-medium text-slate-800":
+                                            !email.isRead,
+                                        "text-slate-500": email.isRead,
+                                    })}
                                 >
                                     {email.subject}
                                 </p>
 
-                                {/* To + size + attachment */}
                                 <div className="flex items-center justify-between">
                                     <p className="text-[11px] text-gray-400 truncate">
                                         {email.to.map(extractEmail).join(", ")}
                                     </p>
+
                                     <div className="flex items-center gap-1.5 flex-shrink-0 ml-1">
                                         {email.attachments.length > 0 && (
                                             <Paperclip className="w-3 h-3 text-gray-400" />
                                         )}
+
                                         <span className="text-[11px] text-gray-400">
                                             {formatSize(email.size)}
                                         </span>
@@ -212,12 +189,12 @@ export function EmailList({
                             </div>
 
                             <button
+                                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
                                 onClick={(event) => {
                                     event.stopPropagation();
 
                                     onDeleteEmail(email.id);
                                 }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all"
                                 title="Delete"
                             >
                                 <Trash2 className="w-3.5 h-3.5" />

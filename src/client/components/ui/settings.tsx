@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
     AlertCircle,
     ArrowLeft,
@@ -8,7 +7,8 @@ import {
     Plus,
     Trash2,
 } from "lucide-react";
-import type { Inbox, SmtpConfig } from "../../shared/types";
+import React, { useState } from "react";
+import type { Inbox, SmtpConfig } from "../../../shared/types";
 
 interface SettingsProps {
     inboxes: Inbox[];

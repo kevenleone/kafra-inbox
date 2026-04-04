@@ -1,33 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+
 import type { Email, Inbox, WsMessage } from "../shared/types";
-import { EmailList } from "./components/EmailList";
-import { EmailViewer } from "./components/EmailViewer";
-import { Settings } from "./components/Settings";
-import { Sidebar } from "./components/Sidebar";
+import { EmailList } from "./components/email/list";
+import { EmailViewer } from "./components/email/viewer";
+import { Settings } from "./components/ui/settings";
+import { Sidebar } from "./components/ui/sidebar";
 
 type View = "mail" | "settings";
 
 function App() {
-    const [view, setView] = useState<View>("mail");
+    const [connected, setConnected] = useState(false);
+    const [emails, setEmails] = useState<Email[]>([]);
     const [inboxes, setInboxes] = useState<Inbox[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [search, setSearch] = useState("");
+    const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
     const [selectedInboxId, setSelectedInboxId] = useState(
         () => new URLSearchParams(location.search).get("inbox") ?? "default",
     );
-    const [emails, setEmails] = useState<Email[]>([]);
     const [total, setTotal] = useState(0);
-    const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-    const [search, setSearch] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [connected, setConnected] = useState(false);
+    const [view, setView] = useState<View>("mail");
 
-    const wsRef = useRef<WebSocket | null>(null);
-    const selectedInboxIdRef = useRef(selectedInboxId);
     const searchRef = useRef(search);
+    const selectedInboxIdRef = useRef(selectedInboxId);
+    const wsRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
         selectedInboxIdRef.current = selectedInboxId;
+
         const params = new URLSearchParams(location.search);
+
         params.set("inbox", selectedInboxId);
         history.replaceState(null, "", `?${params}`);
     }, [selectedInboxId]);
@@ -36,11 +39,13 @@ function App() {
         searchRef.current = search;
     }, [search]);
 
-    // ── WebSocket ─────────────────────────────────────────────────────────────
+    // ── WebSocket
     useEffect(() => {
         function connect() {
-            const proto = location.protocol === "https:" ? "wss:" : "ws:";
-            const ws = new WebSocket(`${proto}//${location.host}/ws`);
+            const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+
+            const ws = new WebSocket(`${protocol}//${location.host}/ws`);
+
             wsRef.current = ws;
 
             ws.onopen = () => setConnected(true);
@@ -59,7 +64,9 @@ function App() {
                             return prev;
                         return [msg.email, ...prev];
                     });
-                    setTotal((t) => t + 1);
+
+                    setTotal((total) => total + 1);
+
                     setInboxes((prev) =>
                         prev.map((inbox) =>
                             inbox.id === msg.email.inboxId
@@ -72,10 +79,14 @@ function App() {
                         ),
                     );
                 } else if (msg.type === "email_deleted") {
-                    setEmails((prev) => prev.filter((e) => e.id !== msg.id));
-                    setTotal((t) => Math.max(0, t - 1));
-                    setSelectedEmail((sel) =>
-                        sel?.id === msg.id ? null : sel,
+                    setEmails((emails) =>
+                        emails.filter((email) => email.id !== msg.id),
+                    );
+
+                    setTotal((total) => Math.max(0, total - 1));
+
+                    setSelectedEmail((selectedEmail) =>
+                        selectedEmail?.id === msg.id ? null : selectedEmail,
                     );
                 } else if (msg.type === "inbox_cleared") {
                     if (msg.inboxId === selectedInboxIdRef.current) {
@@ -83,8 +94,9 @@ function App() {
                         setTotal(0);
                         setSelectedEmail(null);
                     }
-                    setInboxes((prev) =>
-                        prev.map((inbox) =>
+
+                    setInboxes((inboxes) =>
+                        inboxes.map((inbox) =>
                             inbox.id === msg.inboxId
                                 ? { ...inbox, emailCount: 0, unreadCount: 0 }
                                 : inbox,
@@ -110,7 +122,7 @@ function App() {
     // ── Load inboxes ──────────────────────────────────────────────────────────
     useEffect(() => {
         fetch("/api/inboxes")
-            .then((r) => r.json() as Promise<Inbox[]>)
+            .then((response) => response.json() as Promise<Inbox[]>)
             .then(setInboxes)
             .catch(console.error);
     }, []);
@@ -119,10 +131,19 @@ function App() {
     useEffect(() => {
         setLoading(true);
         const params = new URLSearchParams({ inboxId: selectedInboxId });
-        if (search) params.set("search", search);
+
+        if (search) {
+            params.set("search", search);
+        }
 
         fetch(`/api/emails?${params}`)
-            .then((r) => r.json() as Promise<{ data: Email[]; total: number }>)
+            .then(
+                (response) =>
+                    response.json() as Promise<{
+                        data: Email[];
+                        total: number;
+                    }>,
+            )
             .then((data) => {
                 setEmails(data.data);
                 setTotal(data.total);
@@ -134,14 +155,21 @@ function App() {
     // ── Handlers ──────────────────────────────────────────────────────────────
     const handleSelectEmail = useCallback(async (email: Email) => {
         const full = await fetch(`/api/emails/${email.id}`).then(
-            (r) => r.json() as Promise<Email>,
+            (response) => response.json() as Promise<Email>,
         );
+
         setSelectedEmail(full);
-        setEmails((prev) =>
-            prev.map((e) => (e.id === email.id ? { ...e, isRead: true } : e)),
+
+        setEmails((prevEmails) =>
+            prevEmails.map((prevEmail) =>
+                prevEmail.id === email.id
+                    ? { ...prevEmail, isRead: true }
+                    : prevEmail,
+            ),
         );
-        setInboxes((prev) =>
-            prev.map((inbox) =>
+
+        setInboxes((prevInboxes) =>
+            prevInboxes.map((inbox) =>
                 inbox.id === email.inboxId && !email.isRead
                     ? {
                           ...inbox,
@@ -166,11 +194,12 @@ function App() {
         await fetch(`/api/emails?inboxId=${selectedInboxId}`, {
             method: "DELETE",
         });
+
         setEmails([]);
         setTotal(0);
         setSelectedEmail(null);
-        setInboxes((prev) =>
-            prev.map((inbox) =>
+        setInboxes((prevInboxes) =>
+            prevInboxes.map((inbox) =>
                 inbox.id === selectedInboxId
                     ? { ...inbox, emailCount: 0, unreadCount: 0 }
                     : inbox,
@@ -181,14 +210,19 @@ function App() {
     const handleCreateInbox = useCallback(
         async (name: string): Promise<{ error?: string }> => {
             const res = await fetch("/api/inboxes", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name }),
+                headers: { "Content-Type": "application/json" },
+                method: "POST",
             });
+
             const data = (await res.json()) as Inbox & { error?: string };
-            if (!res.ok)
+
+            if (!res.ok) {
                 return { error: data.error ?? "Failed to create inbox" };
-            setInboxes((prev) => [...prev, data]);
+            }
+
+            setInboxes((prevInboxes) => [...prevInboxes, data]);
+
             return {};
         },
         [],
@@ -197,8 +231,14 @@ function App() {
     const handleDeleteInbox = useCallback(
         async (id: string) => {
             await fetch(`/api/inboxes/${id}`, { method: "DELETE" });
-            setInboxes((prev) => prev.filter((inbox) => inbox.id !== id));
-            if (selectedInboxId === id) setSelectedInboxId("default");
+
+            setInboxes((prevInboxes) =>
+                prevInboxes.filter((inbox) => inbox.id !== id),
+            );
+
+            if (selectedInboxId === id) {
+                setSelectedInboxId("default");
+            }
         },
         [selectedInboxId],
     );
@@ -208,38 +248,39 @@ function App() {
     return (
         <div className="flex h-screen overflow-hidden">
             <Sidebar
+                activeView={view}
+                connected={connected}
                 inboxes={inboxes}
                 selectedInboxId={selectedInboxId}
+                onOpenSettings={() => setView("settings")}
                 onSelectInbox={(id) => {
                     setSelectedInboxId(id);
                     setView("mail");
                 }}
-                connected={connected}
-                onOpenSettings={() => setView("settings")}
-                activeView={view}
             />
 
             {view === "settings" ? (
                 <Settings
                     inboxes={inboxes}
+                    onBack={() => setView("mail")}
                     onCreateInbox={handleCreateInbox}
                     onDeleteInbox={handleDeleteInbox}
-                    onBack={() => setView("mail")}
                 />
             ) : (
                 <>
                     <EmailList
                         emails={emails}
-                        total={total}
-                        search={search}
-                        onSearch={setSearch}
-                        selectedId={selectedEmail?.id}
-                        onSelectEmail={handleSelectEmail}
-                        onDeleteEmail={handleDeleteEmail}
-                        onClearInbox={handleClearInbox}
-                        loading={loading}
                         inboxName={selectedInbox?.name ?? "Inbox"}
+                        loading={loading}
+                        onClearInbox={handleClearInbox}
+                        onDeleteEmail={handleDeleteEmail}
+                        onSearch={setSearch}
+                        onSelectEmail={handleSelectEmail}
+                        search={search}
+                        selectedId={selectedEmail?.id}
+                        total={total}
                     />
+
                     <EmailViewer email={selectedEmail} />
                 </>
             )}
@@ -247,15 +288,17 @@ function App() {
     );
 }
 
-function matchesSearch(email: Email, q: string): boolean {
-    const lq = q.toLowerCase();
+function matchesSearch(email: Email, query: string): boolean {
+    const searchQuery = query.toLowerCase();
+
     return (
-        email.subject.toLowerCase().includes(lq) ||
-        email.from.toLowerCase().includes(lq) ||
-        email.to.some((t) => t.toLowerCase().includes(lq)) ||
-        (email.text?.toLowerCase().includes(lq) ?? false)
+        email.subject.toLowerCase().includes(searchQuery) ||
+        email.from.toLowerCase().includes(searchQuery) ||
+        email.to.some((t) => t.toLowerCase().includes(searchQuery)) ||
+        (email.text?.toLowerCase().includes(searchQuery) ?? false)
     );
 }
 
 const root = createRoot(document.getElementById("root")!);
+
 root.render(<App />);

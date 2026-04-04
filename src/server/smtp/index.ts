@@ -1,8 +1,9 @@
 import type { SMTPServer } from "smtp-server";
 import type { Email, WsMessage } from "../../shared/types";
+import { environment } from "../utils/environment";
 import { createSMTPServer } from "./smtp-server";
 
-const SMTP_PORT = 1025;
+const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
 
 let smtpServer: InstanceType<typeof SMTPServer> | null = null;
 

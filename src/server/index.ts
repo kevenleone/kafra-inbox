@@ -9,14 +9,16 @@ import {
 import { inboxByIdHandler, inboxesHandler } from "./http/inboxes";
 import { ruleByIdHandler, rulesHandler } from "./http/rules";
 import { startSmtpServer } from "./smtp";
+import { environment } from "./utils/environment";
 
-const HTTP_PORT = 3000;
-const SMTP_PORT = 1025;
+const HTTP_PORT = environment.KAFRAINBOX_HTTP_PORT;
+const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
 
-const wsClients = new Set<{ send: (msg: string) => void }>();
+const wsClients = new Set<{ send: (message: string) => void }>();
 
-function broadcast(msg: WsMessage) {
-    const payload = JSON.stringify(msg);
+function broadcast(message: WsMessage) {
+    const payload = JSON.stringify(message);
+
     for (const ws of wsClients) {
         try {
             ws.send(payload);
@@ -35,9 +37,7 @@ const server = Bun.serve({
         hmr: true,
         console: true,
     },
-
     port: HTTP_PORT,
-
     routes: {
         "/": index,
         "/api/emails": emailsHandler(httpHandler),
@@ -50,6 +50,7 @@ const server = Bun.serve({
         "/api/rules/:id": ruleByIdHandler,
         "/ws"(req) {
             const success = server.upgrade(req);
+
             if (!success) {
                 return new Response("WebSocket upgrade failed", {
                     status: 500,
@@ -57,7 +58,6 @@ const server = Bun.serve({
             }
         },
     },
-
     websocket: {
         open(ws) {
             wsClients.add(ws);
@@ -75,8 +75,17 @@ const server = Bun.serve({
     },
 });
 
+console.log(`
+ _          __            _____       _               
+| | ____ _ / _|_ __ __ _  \\_   \\_ __ | |__   _____  __
+| |/ / _\` | |_| '__/ _\` |  / /\\/ '_ \\| '_ \\ / _ \\ \\/ /
+|   < (_| |  _| | | (_| /\\/ /_ | | | | |_) | (_) >  < 
+|_|\\_\\__,_|_| |_|  \\__,_\\____/ |_| |_|_.__/ \\___/_/\\_\\
+`);
+
+console.log("[SERVER] Kafra Inbox started");
+console.log(`[HTTP] Listening on http://localhost:${server.port}`);
+
 startSmtpServer(broadcast).catch(() =>
     console.error(`[SMTP] Could not bind to port ${SMTP_PORT}`),
 );
-
-console.log(`[HTTP] Listening on http://localhost:${server.port}`);

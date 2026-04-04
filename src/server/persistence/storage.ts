@@ -3,11 +3,12 @@ import { Database } from "bun:sqlite";
 import type { Email, Inbox, SmtpConfig, SmtpRule } from "../../shared/types";
 import type { EmailRow, InboxRow, IStorage, RuleRow } from "../types";
 import { rowToEmail, rowToInbox, rowToRule } from "../utils";
+import { environment } from "../utils/environment";
 
 class SQLiteStorage implements IStorage {
     private db: Database;
 
-    constructor(path = "./database/mail4all.db") {
+    constructor(path = "./database/kafrastorage.db") {
         this.db = new Database(path, { create: true });
 
         this.db.run("PRAGMA journal_mode = WAL;");
@@ -69,7 +70,10 @@ class SQLiteStorage implements IStorage {
                     `INSERT INTO inboxes (id, name, email_count, unread_count, created_at, smtp)
                      VALUES ('default', 'Default Inbox', 0, 0, ?, ?)`,
                 )
-                .run(new Date().toISOString(), JSON.stringify({ port: 1025 }));
+                .run(
+                    new Date().toISOString(),
+                    JSON.stringify({ port: environment.KAFRAINBOX_SMTP_PORT }),
+                );
         }
     }
 

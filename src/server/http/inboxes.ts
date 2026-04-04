@@ -1,11 +1,12 @@
-import { randomBytes, randomUUID } from "node:crypto";
 import type { BunRequest } from "bun";
+import { randomBytes, randomUUID } from "node:crypto";
 
 import type { Inbox, SmtpConfig } from "../../shared/types";
 import { storage } from "../persistence/storage";
 import type { HTTPHandler } from "../types";
+import { environment } from "../utils/environment";
 
-const SMTP_PORT = 1025;
+const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
 
 export function generateInboxUsername(name: string): string {
     const base =
@@ -70,8 +71,7 @@ export const inboxByIdHandler = (_handler: HTTPHandler) => ({
 
         if (body.smtp) {
             const current = storage.getInbox(inboxId);
-            if (!current)
-                return new Response("Not found", { status: 404 });
+            if (!current) return new Response("Not found", { status: 404 });
 
             if (body.smtp.port !== SMTP_PORT) {
                 return Response.json(
@@ -98,8 +98,7 @@ export const inboxByIdHandler = (_handler: HTTPHandler) => ({
                 username: body.smtp.username ?? current.smtp.username,
                 password: body.smtp.password ?? current.smtp.password,
             });
-            if (!updated)
-                return new Response("Not found", { status: 404 });
+            if (!updated) return new Response("Not found", { status: 404 });
 
             return Response.json(updated);
         }

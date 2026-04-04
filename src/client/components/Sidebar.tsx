@@ -31,7 +31,7 @@ export function Sidebar({
                 </div>
 
                 <span className="font-bold text-xl text-white text-base tracking-tight">
-                    Mail4All
+                    KafraInbox
                 </span>
             </div>
 

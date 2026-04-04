@@ -1,4 +1,4 @@
-# Mail4All
+# KafraInbox
 
 A local email sandbox for testing — captures outgoing emails from your apps without sending them, similar to Mailtrap.
 
@@ -42,7 +42,7 @@ bun test-email.ts
 ## Project Structure
 
 ```
-mail4all/
+KafraInbox/
 ├── server/
 │   ├── index.ts      # Bun HTTP + WebSocket server (port 3000)
 │   ├── smtp.ts       # SMTP server (port 1025) — captures emails

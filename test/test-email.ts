@@ -2,7 +2,7 @@
  * Quick test: send an email via SMTP to verify the sandbox captures it.
  * Run: bun test-email.ts
  */
-import * as net from "net";
+import * as net from "node:net";
 
 function sendSmtpEmail(opts: {
     host: string;
@@ -70,15 +70,15 @@ await sendSmtpEmail({
     from: "sender@example.com",
     host: "localhost",
     port: 1025,
-    subject: "Hello from Mail4All!",
+    subject: "Hello from KafraInbox!",
     to: "inbox@myapp.com",
     html: `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-      <h1 style="color: #1e40af;">Welcome to Mail4All 🎉</h1>
+      <h1 style="color: #1e40af;">Welcome to KafraInbox 🎉</h1>
       <p>This is a <strong>test email</strong> captured by your local SMTP sandbox.</p>
       <p>You can view HTML, text, raw MIME, headers, and attachments in the web UI.</p>
       <a href="http://localhost:3000" style="display: inline-block; background: #2563eb; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; margin-top: 12px;">
-        Open Mail4All
+        Open KafraInbox
       </a>
     </div>
   `,

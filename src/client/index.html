@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Mail4All — Email Sandbox</title>
+        <!-- Tailwind CSS via CDN for development -->
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <script>
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            sidebar: "#0f172a",
+                        },
+                    },
+                },
+            };
+        </script>
+        <link rel="stylesheet" href="./index.css" />
+    </head>
+
+    <body class="bg-gray-50 text-slate-900 antialiased">
+        <div id="root"></div>
+
+        <script type="module" src="./App.tsx"></script>
+    </body>
+</html>

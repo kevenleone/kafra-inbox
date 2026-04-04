@@ -23,8 +23,8 @@ class SQLiteStorage implements IStorage {
                 created_at   TEXT NOT NULL,
                 email_count  INTEGER NOT NULL DEFAULT 0,
                 name         TEXT NOT NULL,
-                smtp         TEXT NOT NULL
-                unread_count INTEGER NOT NULL DEFAULT 0,
+                smtp         TEXT NOT NULL,
+                unread_count INTEGER NOT NULL DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS emails (
@@ -36,13 +36,13 @@ class SQLiteStorage implements IStorage {
                 headers     TEXT NOT NULL DEFAULT '{}',
                 html        TEXT,
                 inbox_id    TEXT NOT NULL REFERENCES inboxes(id) ON DELETE CASCADE,
-                is_read     INTEGER NOT NULL DEFAULT 0
+                is_read     INTEGER NOT NULL DEFAULT 0,
                 raw         TEXT NOT NULL DEFAULT '',
                 size        INTEGER NOT NULL DEFAULT 0,
                 subject     TEXT NOT NULL DEFAULT '',
                 text        TEXT,
                 timestamp   TEXT NOT NULL,
-                to_addrs    TEXT NOT NULL,
+                to_addrs    TEXT NOT NULL
             );
 
             CREATE INDEX IF NOT EXISTS idx_emails_inbox_id  ON emails(inbox_id);
@@ -51,10 +51,10 @@ class SQLiteStorage implements IStorage {
             CREATE TABLE IF NOT EXISTS rules (
                 id          TEXT PRIMARY KEY,
                 delay_ms    INTEGER,
-                description TEXT
+                description TEXT,
                 error_code  INTEGER,
                 pattern     TEXT NOT NULL,
-                type        TEXT NOT NULL,
+                type        TEXT NOT NULL
             );
         `);
 

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 
 import type { Email, Inbox, WsMessage } from "../shared/types";
 import { EmailList } from "./components/email/list";
@@ -9,7 +8,18 @@ import { Sidebar } from "./components/ui/sidebar";
 
 type View = "mail" | "settings";
 
-function App() {
+function matchesSearch(email: Email, query: string): boolean {
+    const searchQuery = query.toLowerCase();
+
+    return (
+        email.subject.toLowerCase().includes(searchQuery) ||
+        email.from.toLowerCase().includes(searchQuery) ||
+        email.to.some((t) => t.toLowerCase().includes(searchQuery)) ||
+        (email.text?.toLowerCase().includes(searchQuery) ?? false)
+    );
+}
+
+export default function App() {
     const [connected, setConnected] = useState(false);
     const [emails, setEmails] = useState<Email[]>([]);
     const [inboxes, setInboxes] = useState<Inbox[]>([]);
@@ -287,18 +297,3 @@ function App() {
         </div>
     );
 }
-
-function matchesSearch(email: Email, query: string): boolean {
-    const searchQuery = query.toLowerCase();
-
-    return (
-        email.subject.toLowerCase().includes(searchQuery) ||
-        email.from.toLowerCase().includes(searchQuery) ||
-        email.to.some((t) => t.toLowerCase().includes(searchQuery)) ||
-        (email.text?.toLowerCase().includes(searchQuery) ?? false)
-    );
-}
-
-const root = createRoot(document.getElementById("root")!);
-
-root.render(<App />);

@@ -1,7 +1,13 @@
 import * as v from "valibot";
 
 const environmentSchema = v.object({
-    KAFRAINBOX_DANGEROUSLY_NO_AUTH: v.optional(v.string(), "false"),
+    KAFRAINBOX_DANGEROUSLY_NO_AUTH: v.optional(
+        v.pipe(
+            v.string(),
+            v.transform((s) => s === "true" || s === "1"),
+        ),
+        "false",
+    ),
 
     KAFRAINBOX_HTTP_PORT: v.optional(
         v.pipe(
@@ -20,13 +26,4 @@ const environmentSchema = v.object({
     ),
 });
 
-const _env = v.parse(environmentSchema, Bun.env);
-
-export const environment = {
-    ..._env,
-    KAFRAINBOX_DANGEROUSLY_NO_AUTH:
-        _env.KAFRAINBOX_DANGEROUSLY_NO_AUTH === "true" ||
-        _env.KAFRAINBOX_DANGEROUSLY_NO_AUTH === "1",
-};
-
-console.log(environment);
+export const environment = v.parse(environmentSchema, Bun.env);

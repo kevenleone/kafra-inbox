@@ -27,12 +27,18 @@ password: (none)
 security: none / STARTTLS disabled
 ```
 
-Both ports are configurable via environment variables:
+All options are configurable via environment variables:
 
-| Variable                      | Default |
-| ----------------------------- | ------- |
-| `KAFRAINBOX_HTTP_SERVER_PORT` | `3134`  |
-| `KAFRAINBOX_SMTP_SERVER_PORT` | `1025`  |
+| Variable                               | Default | Description                                      |
+| -------------------------------------- | ------- | ------------------------------------------------ |
+| `KAFRAINBOX_HTTP_SERVER_PORT`          | `3134`  | HTTP server port                                 |
+| `KAFRAINBOX_SMTP_SERVER_PORT`          | `1025`  | SMTP server port                                 |
+| `KAFRAINBOX_DEFAULT_INBOX_USERNAME`    | —       | Default inbox SMTP username                      |
+| `KAFRAINBOX_DEFAULT_INBOX_PASSWORD`    | —       | Default inbox SMTP password                      |
+| `KAFRAINBOX_SMTP_SERVER_AUTH_OPTIONAL` | `false` | Allow unauthenticated SMTP connections           |
+| `KAFRAINBOX_SMTP_SERVER_AUTH_SECURE`   | `false` | Require secure (TLS) SMTP auth                   |
+| `KAFRAINBOX_SMTP_SERVER_LOGGER`        | `false` | Enable SMTP server logging                       |
+| `KAFRAINBOX_DANGEROUSLY_NO_AUTH`       | `false` | Disable all authentication (development use only)|
 
 ## Testing
 

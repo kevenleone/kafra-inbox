@@ -2,6 +2,14 @@ import pkg from "../../package.json";
 import index from "../client/index.html";
 import type { WsMessage } from "../shared/types";
 import {
+    authLoginHandler,
+    authLogoutHandler,
+    authSetupHandler,
+    authStatusHandler,
+    getSession,
+    withAuth,
+} from "./http/auth";
+import {
     emailAttachmentHandler,
     emailByIdHandler,
     emailRawHandler,
@@ -40,16 +48,27 @@ const server = Bun.serve({
     },
     port: HTTP_PORT,
     routes: {
-        "/": index,
-        "/api/emails": emailsHandler(httpHandler),
-        "/api/emails/:id": emailByIdHandler(httpHandler),
-        "/api/emails/:id/raw": emailRawHandler,
-        "/api/emails/:id/attachments/:index": emailAttachmentHandler,
-        "/api/inboxes": inboxesHandler,
-        "/api/inboxes/:id": inboxByIdHandler(httpHandler),
-        "/api/rules": rulesHandler,
-        "/api/rules/:id": ruleByIdHandler,
+        "/*": index,
+        "/api/auth/login": authLoginHandler,
+        "/api/auth/logout": authLogoutHandler,
+        "/api/auth/setup": authSetupHandler,
+        "/api/auth/status": authStatusHandler,
+        "/api/emails": withAuth(emailsHandler(httpHandler)),
+        "/api/emails/:id": withAuth(emailByIdHandler(httpHandler)),
+        "/api/emails/:id/raw": withAuth(emailRawHandler),
+        "/api/emails/:id/attachments/:index": withAuth(emailAttachmentHandler),
+        "/api/inboxes": withAuth(inboxesHandler),
+        "/api/inboxes/:id": withAuth(inboxByIdHandler(httpHandler)),
+        "/api/rules": withAuth(rulesHandler),
+        "/api/rules/:id": withAuth(ruleByIdHandler),
         "/ws"(req) {
+            if (
+                !environment.KAFRAINBOX_DANGEROUSLY_NO_AUTH &&
+                !getSession(req)
+            ) {
+                return new Response("Unauthorized", { status: 401 });
+            }
+
             const success = server.upgrade(req);
 
             if (!success) {

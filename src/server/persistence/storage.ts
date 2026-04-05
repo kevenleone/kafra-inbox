@@ -1,7 +1,14 @@
 import { Database } from "bun:sqlite";
 
 import type { Email, Inbox, SmtpConfig, SmtpRule } from "../../shared/types";
-import type { EmailRow, InboxRow, IStorage, RuleRow } from "../types";
+import type {
+    EmailRow,
+    InboxRow,
+    IStorage,
+    RuleRow,
+    User,
+    UserRow,
+} from "../types";
 import { rowToEmail, rowToInbox, rowToRule } from "../utils";
 import { environment } from "../utils/environment";
 
@@ -57,6 +64,12 @@ class SQLiteStorage implements IStorage {
                 pattern     TEXT NOT NULL,
                 type        TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                username      TEXT PRIMARY KEY,
+                password_hash TEXT NOT NULL,
+                created_at    TEXT NOT NULL
+            );
         `);
 
         // Seed the default inbox if it doesn't exist yet
@@ -72,7 +85,11 @@ class SQLiteStorage implements IStorage {
                 )
                 .run(
                     new Date().toISOString(),
-                    JSON.stringify({ port: environment.KAFRAINBOX_SMTP_PORT }),
+                    JSON.stringify({
+                        port: environment.KAFRAINBOX_SMTP_PORT,
+                        username: "default",
+                        password: "default",
+                    }),
                 );
         }
     }
@@ -307,6 +324,35 @@ class SQLiteStorage implements IStorage {
 
     deleteRule(id: string): void {
         this.db.query("DELETE FROM rules WHERE id = ?").run(id);
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+
+    hasUsers(): boolean {
+        const row = this.db
+            .query<{ count: number }, []>("SELECT COUNT(*) AS count FROM users")
+            .get();
+        return (row?.count ?? 0) > 0;
+    }
+
+    createUser(username: string, passwordHash: string): void {
+        this.db
+            .query(
+                "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)",
+            )
+            .run(username, passwordHash, new Date().toISOString());
+    }
+
+    getUserByUsername(username: string): User | undefined {
+        const row = this.db
+            .query<UserRow, string>("SELECT * FROM users WHERE username = ?")
+            .get(username);
+        if (!row) return undefined;
+        return {
+            username: row.username,
+            passwordHash: row.password_hash,
+            createdAt: row.created_at,
+        };
     }
 }
 

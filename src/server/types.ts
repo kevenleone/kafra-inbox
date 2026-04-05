@@ -6,6 +6,18 @@ import type {
     WsMessage,
 } from "../shared/types";
 
+export interface User {
+    username: string;
+    passwordHash: string;
+    createdAt: string;
+}
+
+export interface UserRow {
+    username: string;
+    password_hash: string;
+    created_at: string;
+}
+
 export interface EmailRow {
     attachments: string;
     bcc: string;
@@ -29,6 +41,7 @@ export interface IStorage {
     addInbox(inbox: Inbox): void;
     addRule(rule: SmtpRule): void;
     clearInbox(inboxId: string): number;
+    createUser(username: string, passwordHash: string): void;
     deleteEmail(id: string): boolean;
     deleteInbox(id: string): boolean;
     deleteRule(id: string): void;
@@ -43,6 +56,8 @@ export interface IStorage {
     getInboxByUsername(username: string): Inbox | undefined;
     getInboxes(): Inbox[];
     getRules(): SmtpRule[];
+    getUserByUsername(username: string): User | undefined;
+    hasUsers(): boolean;
     markAsRead(id: string): void;
     updateInboxSmtp(id: string, smtp: SmtpConfig): Inbox | undefined;
 }

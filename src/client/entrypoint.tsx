@@ -1,11 +1,7 @@
 import { createRoot } from "react-dom/client";
 
-import App from "./App";
-
-export function KafraInboxEntryPoint() {
-    return <App />;
-}
+import { Router } from "./router";
 
 const root = createRoot(document.getElementById("root")!);
 
-root.render(<KafraInboxEntryPoint />);
+root.render(<Router />);

@@ -4,10 +4,13 @@ import {
     ChevronRight,
     Cog,
     Inbox as InboxIcon,
+    LogOut,
     Mail,
     Plus,
 } from "lucide-react";
 import { useState } from "react";
+
+import { useAuth } from "../../context/auth";
 
 import type { Inbox } from "../../../shared/types";
 
@@ -28,6 +31,7 @@ export function Sidebar({
     onSelectInbox,
     selectedInboxId,
 }: SidebarProps) {
+    const { username, signOut } = useAuth();
     const [collapsed, setCollapsed] = useState(
         () => localStorage.getItem("@kafrainbox/sidebar:collapsed") === "true",
     );
@@ -209,12 +213,40 @@ export function Sidebar({
                         },
                     )}
                     onClick={onOpenSettings}
-                    title={"Settings"}
+                    title="Settings"
                 >
                     <Cog className="w-4 h-4 flex-shrink-0" />
 
                     {!collapsed && "Settings"}
                 </button>
+
+                {username && username !== "anonymous" && (
+                    <div
+                        className={clsx(
+                            "flex items-center pt-1",
+                            collapsed
+                                ? "flex-col gap-1"
+                                : "gap-2 justify-between",
+                        )}
+                    >
+                        {!collapsed && (
+                            <span
+                                className="text-xs text-zinc-400 truncate px-2 min-w-0"
+                                title={username}
+                            >
+                                {username}
+                            </span>
+                        )}
+
+                        <button
+                            className="flex-shrink-0 flex items-center justify-center p-1.5 rounded-md text-zinc-500 hover:bg-zinc-800/70 hover:text-zinc-300 transition-colors"
+                            onClick={signOut}
+                            title="Sign out"
+                        >
+                            <LogOut className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
             </div>
         </aside>
     );

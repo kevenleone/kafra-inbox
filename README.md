@@ -29,10 +29,10 @@ security: none / STARTTLS disabled
 
 Both ports are configurable via environment variables:
 
-| Variable               | Default |
-| ---------------------- | ------- |
-| `KAFRAINBOX_HTTP_PORT` | `3134`  |
-| `KAFRAINBOX_SMTP_PORT` | `1025`  |
+| Variable                      | Default |
+| ----------------------------- | ------- |
+| `KAFRAINBOX_HTTP_SERVER_PORT` | `3134`  |
+| `KAFRAINBOX_SMTP_SERVER_PORT` | `1025`  |
 
 ## Testing
 

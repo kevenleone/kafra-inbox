@@ -7,7 +7,7 @@ import type { HTTPHandler } from "../types";
 import { environment } from "../utils/environment";
 import { generatePass, generateText } from "../utils/text";
 
-const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
+const SMTP_PORT = environment.KAFRAINBOX_SMTP_SERVER_PORT;
 
 export const inboxesHandler = {
     GET() {
@@ -55,7 +55,10 @@ export const inboxByIdHandler = (_handler: HTTPHandler) => ({
 
         if (body.smtp) {
             const current = storage.getInbox(inboxId);
-            if (!current) return new Response("Not found", { status: 404 });
+
+            if (!current) {
+                return new Response("Not found", { status: 404 });
+            }
 
             if (body.smtp.port !== SMTP_PORT) {
                 return Response.json(
@@ -78,11 +81,14 @@ export const inboxByIdHandler = (_handler: HTTPHandler) => ({
             }
 
             const updated = storage.updateInboxSmtp(inboxId, {
+                password: body.smtp.password ?? current.smtp.password,
                 port: SMTP_PORT,
                 username: body.smtp.username ?? current.smtp.username,
-                password: body.smtp.password ?? current.smtp.password,
             });
-            if (!updated) return new Response("Not found", { status: 404 });
+
+            if (!updated) {
+                return new Response("Not found", { status: 404 });
+            }
 
             return Response.json(updated);
         }
@@ -92,10 +98,12 @@ export const inboxByIdHandler = (_handler: HTTPHandler) => ({
 
     async DELETE(req: BunRequest<"/api/inboxes/:id">) {
         const deleted = storage.deleteInbox(req.params.id);
+
         if (!deleted)
             return new Response("Cannot delete default inbox", {
                 status: 400,
             });
+
         return Response.json({ deleted: true });
     },
 });

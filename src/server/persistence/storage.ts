@@ -93,7 +93,7 @@ class SQLiteStorage implements IStorage {
                 .run(
                     new Date().toISOString(),
                     JSON.stringify({
-                        port: environment.KAFRAINBOX_SMTP_PORT,
+                        port: environment.KAFRAINBOX_SMTP_SERVER_PORT,
                         username:
                             environment.KAFRAINBOX_DEFAULT_INBOX_USERNAME ||
                             generateText("default"),
@@ -299,13 +299,17 @@ class SQLiteStorage implements IStorage {
     }
 
     deleteInbox(id: string): boolean {
-        if (id === "default") return false;
+        if (id === "default") {
+            return false;
+        }
+
         const rows = this.db
             .query<
                 InboxRow,
                 string
             >("DELETE FROM inboxes WHERE id = ? RETURNING id")
             .all(id);
+
         return rows.length > 0;
     }
 

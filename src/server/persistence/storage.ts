@@ -11,6 +11,7 @@ import type {
 } from "../types";
 import { rowToEmail, rowToInbox, rowToRule } from "../utils";
 import { environment } from "../utils/environment";
+import { generatePass, generateText } from "../utils/text";
 
 class SQLiteStorage implements IStorage {
     private db: Database;
@@ -93,8 +94,12 @@ class SQLiteStorage implements IStorage {
                     new Date().toISOString(),
                     JSON.stringify({
                         port: environment.KAFRAINBOX_SMTP_PORT,
-                        username: "default",
-                        password: "default",
+                        username:
+                            environment.KAFRAINBOX_DEFAULT_INBOX_USERNAME ||
+                            generateText("default"),
+                        password:
+                            environment.KAFRAINBOX_DEFAULT_INBOX_PASSWORD ||
+                            generatePass(8),
                     }),
                 );
         }
@@ -262,6 +267,7 @@ class SQLiteStorage implements IStorage {
                 string
             >("SELECT * FROM inboxes WHERE json_extract(smtp, '$.username') = ?")
             .get(username);
+
         return row ? rowToInbox(row) : undefined;
     }
 
@@ -338,6 +344,7 @@ class SQLiteStorage implements IStorage {
         const row = this.db
             .query<{ count: number }, []>("SELECT COUNT(*) AS count FROM users")
             .get();
+
         return (row?.count ?? 0) > 0;
     }
 

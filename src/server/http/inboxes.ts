@@ -1,30 +1,13 @@
 import type { BunRequest } from "bun";
-import { randomBytes, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 
 import type { Inbox, SmtpConfig } from "../../shared/types";
 import { storage } from "../persistence/storage";
 import type { HTTPHandler } from "../types";
 import { environment } from "../utils/environment";
+import { generatePass, generateText } from "../utils/text";
 
 const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
-
-export function generateInboxUsername(name: string): string {
-    const base =
-        name
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/^-+|-+$/g, "")
-            .slice(0, 24) || "inbox";
-
-    let username = `${base}-${randomBytes(3).toString("hex")}`;
-
-    while (storage.getInboxByUsername(username)) {
-        username = `${base}-${randomBytes(3).toString("hex")}`;
-    }
-
-    return username;
-}
 
 export const inboxesHandler = {
     GET() {
@@ -34,6 +17,7 @@ export const inboxesHandler = {
     async POST(req: BunRequest) {
         const body = (await req.json()) as { name?: string };
         const name = body.name?.trim();
+
         if (!name) {
             return Response.json(
                 { error: "Name is required" },
@@ -47,9 +31,9 @@ export const inboxesHandler = {
             id: randomUUID(),
             name,
             smtp: {
+                password: generatePass(8),
                 port: SMTP_PORT,
-                username: generateInboxUsername(name),
-                password: randomBytes(8).toString("hex"),
+                username: generateText(name),
             },
             unreadCount: 0,
         };

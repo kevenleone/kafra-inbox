@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import type { Email, Inbox, WsMessage } from "../shared/types";
 import { EmailList } from "./components/email/list";
@@ -20,6 +21,8 @@ function matchesSearch(email: Email, query: string): boolean {
 }
 
 export default function App() {
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [connected, setConnected] = useState(false);
     const [emails, setEmails] = useState<Email[]>([]);
     const [inboxes, setInboxes] = useState<Inbox[]>([]);
@@ -27,7 +30,7 @@ export default function App() {
     const [search, setSearch] = useState("");
     const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
     const [selectedInboxId, setSelectedInboxId] = useState(
-        () => new URLSearchParams(location.search).get("inbox") ?? "default",
+        () => searchParams.get("inbox") ?? "default",
     );
     const [total, setTotal] = useState(0);
     const [view, setView] = useState<View>("mail");
@@ -38,18 +41,20 @@ export default function App() {
 
     useEffect(() => {
         selectedInboxIdRef.current = selectedInboxId;
-
-        const params = new URLSearchParams(location.search);
-
-        params.set("inbox", selectedInboxId);
-        history.replaceState(null, "", `?${params}`);
-    }, [selectedInboxId]);
+        setSearchParams(
+            (prev) => {
+                prev.set("inbox", selectedInboxId);
+                return prev;
+            },
+            { replace: true },
+        );
+    }, [selectedInboxId, setSearchParams]);
 
     useEffect(() => {
         searchRef.current = search;
     }, [search]);
 
-    // ── WebSocket
+    // ── WebSocket ─────────────────────────────────────────────────────────────
     useEffect(() => {
         function connect() {
             const protocol = location.protocol === "https:" ? "wss:" : "ws:";

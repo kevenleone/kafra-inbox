@@ -95,6 +95,7 @@ const server = Bun.serve({
     },
 });
 
+console.log(Bun.color("#d4ff00", "ansi"));
 console.log(`
  _          __            _____       _               
 | | ____ _ / _|_ __ __ _  \\_   \\_ __ | |__   _____  __

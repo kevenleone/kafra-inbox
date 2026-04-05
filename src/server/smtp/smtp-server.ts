@@ -1,43 +1,23 @@
 /**
  * SMTP Server - captures outgoing test emails on a shared SMTP listener.
- *
- * The default inbox accepts anonymous traffic. Additional inboxes are routed
- * by SMTP auth username and password.
+ * Inboxes are routed by SMTP auth username and password.
  */
-import type { AddressObject } from "mailparser";
+
 import { simpleParser } from "mailparser";
 import { randomUUID } from "node:crypto";
 import { SMTPServer } from "smtp-server";
 
 import type { Email } from "../../shared/types";
 import { storage } from "../persistence/storage";
-
-function extractAddresses(
-    field: AddressObject | AddressObject[] | undefined,
-): string[] {
-    if (!field) {
-        return [];
-    }
-
-    const addresses = Array.isArray(field) ? field : [field];
-
-    return addresses.flatMap(
-        (address) =>
-            (address.value ?? [])
-                .map((value) =>
-                    value.address
-                        ? `${value.name ? value.name + " " : ""}<${value.address}>`.trim()
-                        : value.name,
-                )
-                .filter(Boolean) as string[],
-    );
-}
+import { environment } from "../utils/environment";
+import { extractAddresses } from "../utils/extract-addresses";
 
 export function createSMTPServer(onEmail: (email: Email) => void) {
     const server = new SMTPServer({
-        authOptional: true,
+        authOptional: environment.KAFRAINBOX_SMTP_SERVER_AUTH_OPTIONAL,
         disabledCommands: ["STARTTLS"],
-        secure: false,
+        logger: environment.KAFRAINBOX_SMTP_SERVER_LOGGER,
+        secure: environment.KAFRAINBOX_SMTP_SERVER_AUTH_SECURE,
 
         onAuth(auth, _session, callback) {
             if (!auth.username) {
@@ -102,17 +82,21 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                         typeof session.user === "string"
                             ? session.user
                             : "default";
+
                     const inbox =
                         storage.getInbox(inboxId) ??
                         storage.getInbox("default");
+
                     if (!inbox) {
                         callback(new Error("Inbox not found"));
+
                         return;
                     }
 
                     const delayRule = storage
                         .getRules()
                         .find((r) => r.type === "delay");
+
                     if (delayRule?.delayMs) {
                         await new Promise((resolve) =>
                             setTimeout(resolve, delayRule.delayMs),
@@ -122,6 +106,7 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                     const parsed = await simpleParser(rawBuffer);
 
                     const headers: Record<string, string> = {};
+
                     const stringify = (v: unknown): string => {
                         if (typeof v === "string") return v;
 
@@ -143,7 +128,8 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                     }
 
                     const email: Email = {
-                        id: randomUUID(),
+                        bcc: extractAddresses(parsed.bcc),
+                        cc: extractAddresses(parsed.cc),
                         from:
                             parsed.from?.text ??
                             (session.envelope.mailFrom
@@ -153,20 +139,15 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                                       }
                                   ).address
                                 : "unknown"),
-                        to:
-                            extractAddresses(parsed.to).length > 0
-                                ? extractAddresses(parsed.to)
-                                : session.envelope.rcptTo.map((r) => r.address),
-                        cc: extractAddresses(parsed.cc),
-                        bcc: extractAddresses(parsed.bcc),
-                        subject: parsed.subject ?? "(no subject)",
-                        text: parsed.text ?? undefined,
+                        id: randomUUID(),
+                        inboxId: inbox.id,
+                        isRead: false,
+                        headers,
                         html:
                             typeof parsed.html === "string"
                                 ? parsed.html
                                 : undefined,
                         raw: rawEmail,
-                        headers,
                         attachments: (parsed.attachments ?? []).map((att) => ({
                             filename: att.filename ?? "attachment",
                             contentType: att.contentType,
@@ -174,10 +155,15 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                             content: att.content.toString("base64"),
                             cid: att.cid,
                         })),
-                        size: rawBuffer.length,
+                        text: parsed.text ?? undefined,
                         timestamp: new Date().toISOString(),
-                        inboxId: inbox.id,
-                        isRead: false,
+                        to:
+                            extractAddresses(parsed.to).length > 0
+                                ? extractAddresses(parsed.to)
+                                : session.envelope.rcptTo.map((r) => r.address),
+
+                        subject: parsed.subject ?? "(no subject)",
+                        size: rawBuffer.length,
                     };
 
                     storage.addEmail(email);
@@ -202,8 +188,6 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
                 callback(err);
             });
         },
-
-        logger: false,
     });
 
     server.on("error", (error) => {

@@ -7,15 +7,15 @@ import type {
 } from "../shared/types";
 
 export interface User {
-    username: string;
-    passwordHash: string;
     createdAt: string;
+    passwordHash: string;
+    username: string;
 }
 
 export interface UserRow {
-    username: string;
-    password_hash: string;
     created_at: string;
+    password_hash: string;
+    username: string;
 }
 
 export interface EmailRow {
@@ -44,9 +44,9 @@ export interface IStorage {
     createSession(token: string, username: string): void;
     createUser(username: string, passwordHash: string): void;
     deleteEmail(id: string): boolean;
-    deleteSession(token: string): void;
     deleteInbox(id: string): boolean;
     deleteRule(id: string): void;
+    deleteSession(token: string): void;
     getEmail(id: string): Email | undefined;
     getEmails(
         page: number,

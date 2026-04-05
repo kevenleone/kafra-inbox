@@ -26,15 +26,6 @@ class SQLiteStorage implements IStorage {
 
     private migrate(): void {
         this.db.run(`
-            CREATE TABLE IF NOT EXISTS inboxes (
-                id           TEXT PRIMARY KEY,
-                created_at   TEXT NOT NULL,
-                email_count  INTEGER NOT NULL DEFAULT 0,
-                name         TEXT NOT NULL,
-                smtp         TEXT NOT NULL,
-                unread_count INTEGER NOT NULL DEFAULT 0
-            );
-
             CREATE TABLE IF NOT EXISTS emails (
                 id          TEXT PRIMARY KEY,
                 attachments TEXT NOT NULL DEFAULT '[]',
@@ -53,6 +44,15 @@ class SQLiteStorage implements IStorage {
                 to_addrs    TEXT NOT NULL
             );
 
+              CREATE TABLE IF NOT EXISTS inboxes (
+                id           TEXT PRIMARY KEY,
+                created_at   TEXT NOT NULL,
+                email_count  INTEGER NOT NULL DEFAULT 0,
+                name         TEXT NOT NULL,
+                smtp         TEXT NOT NULL,
+                unread_count INTEGER NOT NULL DEFAULT 0
+            );
+
             CREATE INDEX IF NOT EXISTS idx_emails_inbox_id  ON emails(inbox_id);
             CREATE INDEX IF NOT EXISTS idx_emails_timestamp ON emails(timestamp DESC);
 
@@ -65,10 +65,16 @@ class SQLiteStorage implements IStorage {
                 type        TEXT NOT NULL
             );
 
+             CREATE TABLE IF NOT EXISTS sessions (
+                created_at TEXT NOT NULL,
+                token      TEXT PRIMARY KEY,
+                username   TEXT NOT NULL REFERENCES users(username) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS users (
-                username      TEXT PRIMARY KEY,
+                created_at    TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
-                created_at    TEXT NOT NULL
+                username      TEXT PRIMARY KEY
             );
         `);
 
@@ -353,6 +359,30 @@ class SQLiteStorage implements IStorage {
             passwordHash: row.password_hash,
             createdAt: row.created_at,
         };
+    }
+
+    // ── Sessions ──────────────────────────────────────────────────────────────
+
+    createSession(token: string, username: string): void {
+        this.db
+            .query(
+                "INSERT INTO sessions (token, username, created_at) VALUES (?, ?, ?)",
+            )
+            .run(token, username, new Date().toISOString());
+    }
+
+    getSession(token: string): { username: string } | undefined {
+        const row = this.db
+            .query<
+                { username: string },
+                string
+            >("SELECT username FROM sessions WHERE token = ?")
+            .get(token);
+        return row ?? undefined;
+    }
+
+    deleteSession(token: string): void {
+        this.db.query("DELETE FROM sessions WHERE token = ?").run(token);
     }
 }
 

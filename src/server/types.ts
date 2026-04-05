@@ -41,8 +41,10 @@ export interface IStorage {
     addInbox(inbox: Inbox): void;
     addRule(rule: SmtpRule): void;
     clearInbox(inboxId: string): number;
+    createSession(token: string, username: string): void;
     createUser(username: string, passwordHash: string): void;
     deleteEmail(id: string): boolean;
+    deleteSession(token: string): void;
     deleteInbox(id: string): boolean;
     deleteRule(id: string): void;
     getEmail(id: string): Email | undefined;
@@ -56,6 +58,7 @@ export interface IStorage {
     getInboxByUsername(username: string): Inbox | undefined;
     getInboxes(): Inbox[];
     getRules(): SmtpRule[];
+    getSession(token: string): { username: string } | undefined;
     getUserByUsername(username: string): User | undefined;
     hasUsers(): boolean;
     markAsRead(id: string): void;

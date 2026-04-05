@@ -5,8 +5,6 @@ import { environment } from "../utils/environment";
 
 const SESSION_COOKIE = "kafra_session";
 
-const sessions = new Map<string, { username: string }>();
-
 function generateToken(): string {
     return randomBytes(32).toString("hex");
 }
@@ -30,7 +28,7 @@ export function getSession(req: Request): { username: string } | null {
     const token = cookies[SESSION_COOKIE];
     if (!token) return null;
 
-    return sessions.get(token) ?? null;
+    return storage.getSession(token) ?? null;
 }
 
 function makeSessionCookie(token: string): string {
@@ -100,7 +98,7 @@ export const authSetupHandler = {
         storage.createUser(username, passwordHash);
 
         const token = generateToken();
-        sessions.set(token, { username });
+        storage.createSession(token, username);
 
         return new Response(JSON.stringify({ username }), {
             headers: {
@@ -142,7 +140,7 @@ export const authLoginHandler = {
         }
 
         const token = generateToken();
-        sessions.set(token, { username });
+        storage.createSession(token, username);
 
         return new Response(JSON.stringify({ username }), {
             headers: {
@@ -159,7 +157,7 @@ export const authLogoutHandler = {
         const token = cookies[SESSION_COOKIE];
 
         if (token) {
-            sessions.delete(token);
+            storage.deleteSession(token);
         }
 
         return new Response(JSON.stringify({ ok: true }), {

@@ -20,8 +20,8 @@ import { ruleByIdHandler, rulesHandler } from "./http/rules";
 import { startSmtpServer } from "./smtp";
 import { environment } from "./utils/environment";
 
-const HTTP_PORT = environment.KAFRAINBOX_HTTP_PORT;
-const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
+const HTTP_PORT = environment.KAFRAINBOX_HTTP_SERVER_PORT;
+const SMTP_PORT = environment.KAFRAINBOX_SMTP_SERVER_PORT;
 
 const wsClients = new Set<{ send: (message: string) => void }>();
 

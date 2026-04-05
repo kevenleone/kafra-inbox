@@ -3,7 +3,7 @@ import type { Email, WsMessage } from "../../shared/types";
 import { environment } from "../utils/environment";
 import { createSMTPServer } from "./smtp-server";
 
-const SMTP_PORT = environment.KAFRAINBOX_SMTP_PORT;
+const SMTP_PORT = environment.KAFRAINBOX_SMTP_SERVER_PORT;
 
 declare global {
     var __smtpServer: InstanceType<typeof SMTPServer> | null;

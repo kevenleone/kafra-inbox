@@ -4,6 +4,8 @@
  */
 import * as net from "node:net";
 
+import { environment } from "../src/server/utils/environment";
+
 function sendSmtpEmail(opts: {
     host: string;
     port: number;
@@ -69,9 +71,6 @@ function sendSmtpEmail(opts: {
 await sendSmtpEmail({
     from: "sender@example.com",
     host: "localhost",
-    port: 1025,
-    subject: "Hello from KafraInbox!",
-    to: "inbox@myapp.com",
     html: `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
       <h1 style="color: #1e40af;">Welcome to KafraInbox 🎉</h1>
@@ -82,6 +81,9 @@ await sendSmtpEmail({
       </a>
     </div>
   `,
+    port: environment.KAFRAINBOX_SMTP_SERVER_PORT,
+    subject: "Hello from KafraInbox!",
+    to: "inbox@myapp.com",
 });
 
-console.log("\n✓ Email sent successfully. Check http://localhost:3000");
+console.log(`\n✓ Email sent successfully. Check http://localhost:${environment.KAFRAINBOX_HTTP_SERVER_PORT}`);

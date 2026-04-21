@@ -1,5 +1,6 @@
 import type { SMTPServer } from "smtp-server";
 import type { Email, WsMessage } from "../../shared/types";
+import { notifyNewEmail } from "../services/ntfy";
 import { environment } from "../utils/environment";
 import { createSMTPServer } from "./smtp-server";
 
@@ -23,6 +24,8 @@ export function startSmtpServer(
 
         const server = createSMTPServer((email: Email) => {
             broadcast({ type: "new_email", email });
+            
+            notifyNewEmail(email);
         });
 
         server.listen(SMTP_PORT, (error?: Error) => {

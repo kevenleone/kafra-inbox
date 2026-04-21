@@ -20,6 +20,15 @@ const environmentSchema = v.object({
         "3134",
     ),
 
+    KAFRAINBOX_NTFY_PRESET: v.optional(
+        v.picklist(["short", "full", "dev"]),
+        "dev",
+    ),
+
+    KAFRAINBOX_NTFY_TOKEN: v.optional(v.string()),
+
+    KAFRAINBOX_NTFY_URL: v.optional(v.string()),
+
     KAFRAINBOX_SMTP_SERVER_PORT: v.optional(
         v.pipe(
             v.string(),

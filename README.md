@@ -57,7 +57,7 @@ When `KAFRAINBOX_NTFY_URL` is set, a push notification is sent to your [ntfy](ht
 
 | Command | Description |
 |---|---|
-| `bun dev` | Start with hot-reload (`--hot`) |
+| `bun dev` | Start with hot-reload (`--watch`) |
 | `bun start` | Start without hot-reload |
 | `bun build` | Bundle frontend to `dist/` |
 | `bun lint` | Run oxlint |

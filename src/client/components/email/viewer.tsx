@@ -1,9 +1,9 @@
 import { Download, Mail, Paperclip } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { formatSize } from "../../../shared/format";
 import type { Email } from "../../../shared/types";
 import { downloadAttachment } from "../../utils/attachment";
-import { formatSize } from "../../utils/format";
 import { NoContent } from "../no-content";
 import { EmailHeader } from "./header";
 import { EmailRenderer } from "./renderer";

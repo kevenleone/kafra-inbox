@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import React from "react";
 
+import { formatSize, formatTime } from "../../../shared/format";
 import type { Email } from "../../../shared/types";
-import { formatSize, formatTime } from "../../utils/format";
 import { extractDisplayName, extractEmail, unquote } from "../../utils/text";
 
 interface EmailListProps {

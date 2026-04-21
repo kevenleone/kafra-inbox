@@ -31,7 +31,8 @@
         "dev": "bun --watch src/server/index.ts",
         "lint:fix": "oxlint --fix --config .oxlintrc.json src",
         "lint": "oxlint --config .oxlintrc.json src",
-        "start": "bun src/server/index.ts"
+        "start": "bun src/server/index.ts",
+        "test": "bun test"
     },
     "version": "1.0.0"
 }

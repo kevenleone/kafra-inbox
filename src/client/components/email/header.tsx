@@ -1,7 +1,7 @@
 import { Download, Paperclip } from "lucide-react";
 
+import { formatDate, formatSize } from "../../../shared/format";
 import type { Email } from "../../../shared/types";
-import { formatDate, formatSize } from "../../utils/format";
 import { MetaRow } from "../meta-row";
 
 export function EmailHeader({ email }: { email: Email }) {

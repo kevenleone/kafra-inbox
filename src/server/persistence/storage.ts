@@ -13,7 +13,7 @@ import { rowToEmail, rowToInbox, rowToRule } from "../utils";
 import { environment } from "../utils/environment";
 import { generatePass, generateText } from "../utils/text";
 
-class SQLiteStorage implements IStorage {
+export class SQLiteStorage implements IStorage {
     private db: Database;
 
     constructor(path = "./database/kafrastorage.db") {

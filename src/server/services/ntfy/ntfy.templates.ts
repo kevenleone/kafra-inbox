@@ -1,4 +1,4 @@
-import { formatSize } from "../../../client/utils/format";
+import { formatSize } from "../../../shared/format";
 import type { Email } from "../../../shared/types";
 
 const TEXT_PREVIEW_LENGTH = 500;

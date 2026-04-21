@@ -27,18 +27,41 @@ password: (none)
 security: none / STARTTLS disabled
 ```
 
-All options are configurable via environment variables:
+## Environment Variables
 
-| Variable                               | Default | Description                                      |
-| -------------------------------------- | ------- | ------------------------------------------------ |
-| `KAFRAINBOX_HTTP_SERVER_PORT`          | `3134`  | HTTP server port                                 |
-| `KAFRAINBOX_SMTP_SERVER_PORT`          | `1025`  | SMTP server port                                 |
-| `KAFRAINBOX_DEFAULT_INBOX_USERNAME`    | —       | Default inbox SMTP username                      |
-| `KAFRAINBOX_DEFAULT_INBOX_PASSWORD`    | —       | Default inbox SMTP password                      |
-| `KAFRAINBOX_SMTP_SERVER_AUTH_OPTIONAL` | `false` | Allow unauthenticated SMTP connections           |
-| `KAFRAINBOX_SMTP_SERVER_AUTH_SECURE`   | `false` | Require secure (TLS) SMTP auth                   |
-| `KAFRAINBOX_SMTP_SERVER_LOGGER`        | `false` | Enable SMTP server logging                       |
-| `KAFRAINBOX_DANGEROUSLY_NO_AUTH`       | `false` | Disable all authentication (development use only)|
+| Variable | Default | Description |
+|---|---|---|
+| `KAFRAINBOX_HTTP_SERVER_PORT` | `3134` | HTTP server port |
+| `KAFRAINBOX_SMTP_SERVER_PORT` | `1025` | SMTP server port |
+| `KAFRAINBOX_DEFAULT_INBOX_USERNAME` | — | Default inbox SMTP username |
+| `KAFRAINBOX_DEFAULT_INBOX_PASSWORD` | — | Default inbox SMTP password |
+| `KAFRAINBOX_SMTP_SERVER_AUTH_OPTIONAL` | `false` | Allow unauthenticated SMTP connections |
+| `KAFRAINBOX_SMTP_SERVER_AUTH_SECURE` | `false` | Require secure (TLS) SMTP auth |
+| `KAFRAINBOX_SMTP_SERVER_LOGGER` | `false` | Enable verbose SMTP logging |
+| `KAFRAINBOX_DANGEROUSLY_NO_AUTH` | `false` | Disable all authentication (dev only) |
+| `KAFRAINBOX_NTFY_URL` | — | ntfy topic URL for push notifications on new email |
+| `KAFRAINBOX_NTFY_TOKEN` | — | Bearer token for private ntfy topics |
+| `KAFRAINBOX_NTFY_PRESET` | `full` | Notification body format: `short`, `full`, or `dev` |
+
+### ntfy integration
+
+When `KAFRAINBOX_NTFY_URL` is set, a push notification is sent to your [ntfy](https://ntfy.sh) topic whenever a new email arrives. Three presets control the message body:
+
+| Preset | Content |
+|---|---|
+| `short` | Single line: `sender → recipient [Inbox]` |
+| `full` | From / To / CC / Inbox / Size + text preview + attachment names |
+| `dev` | Everything in `full` plus BCC, email ID, timestamp, and per-attachment size and content-type |
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `bun dev` | Start with hot-reload (`--hot`) |
+| `bun start` | Start without hot-reload |
+| `bun build` | Bundle frontend to `dist/` |
+| `bun lint` | Run oxlint |
+| `bun lint:fix` | Run oxlint with auto-fix |
 
 ## Testing
 
@@ -48,54 +71,17 @@ Send a test email to verify everything works:
 bun test-email.ts
 ```
 
-## Scripts
-
-| Command     | Description                     |
-| ----------- | ------------------------------- |
-| `bun dev`   | Start with hot-reload (`--hot`) |
-| `bun start` | Start without hot-reload        |
-| `bun build` | Bundle frontend to `dist/`      |
-
-## Project Structure
-
-```
-src/
-├── client/
-│   ├── index.html              # HTML entry point
-│   ├── index.css               # Global styles
-│   ├── App.tsx                 # Main React app
-│   └── components/
-│       ├── EmailList.tsx       # Searchable email list
-│       ├── EmailViewer.tsx     # Email detail (HTML/Text/Raw/Headers tabs)
-│       ├── Settings.tsx        # App settings panel
-│       └── Sidebar.tsx         # Inbox list + SMTP config panel
-├── server/
-│   ├── index.ts                # Bun HTTP + WebSocket server
-│   ├── types.ts                # Server-side TypeScript types
-│   ├── http/
-│   │   ├── emails.ts           # GET /api/emails, DELETE /api/emails
-│   │   ├── email.ts            # /api/emails/:id routes
-│   │   ├── inboxes.ts          # /api/inboxes routes
-│   │   └── rules.ts            # /api/rules routes
-│   ├── persistence/
-│   │   └── storage.ts          # SQLite storage (bun:sqlite)
-│   ├── smtp/
-│   │   ├── index.ts            # SMTP server lifecycle
-│   │   └── smtp-server.ts      # SMTP server creation + email parsing
-│   └── utils/
-│       ├── environment.ts      # Validated env vars (valibot)
-│       └── index.ts            # Shared utilities
-└── shared/
-    └── types.ts                # Types shared between client and server
-```
-
 ## Features
 
-- **SMTP capture** — accepts all mail on the configured port, no auth required
+- **SMTP capture** — accepts all mail on the configured port
 - **Real-time updates** — new emails appear instantly via WebSocket
-- **Email viewer** — HTML (sandboxed iframe), Text, Raw MIME, Headers tabs
+- **Email viewer** — HTML (sandboxed iframe), Text, Raw MIME, and Headers tabs
 - **Attachments** — listed with download support; inline CID images resolved
-- **Multiple inboxes** — create/delete additional inboxes with per-inbox SMTP credentials
+- **Multiple inboxes** — create/delete inboxes with per-inbox SMTP credentials
+- **URL-driven navigation** — inbox and selected email are reflected in the URL (`/:inboxId/:emailId`)
+- **Unread tracking** — unread count shown in the sidebar and browser tab title
+- **Keyboard navigation** — previous/next email buttons in the list header
 - **Search** — filter by subject, sender, recipient, or body
-- **Error simulation** — add rules to reject recipients or introduce delays
+- **Error simulation** — rules to reject recipients or introduce delivery delays
+- **Push notifications** — optional ntfy integration with configurable message presets
 - **SQLite persistence** — emails and inboxes survive server restarts

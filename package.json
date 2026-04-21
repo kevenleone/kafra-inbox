@@ -28,7 +28,7 @@
     "type": "module",
     "scripts": {
         "build": "bun build src/client/index.html --outdir dist",
-        "dev": "bun --hot src/server/index.ts",
+        "dev": "bun --watch src/server/index.ts",
         "lint:fix": "oxlint --fix --config .oxlintrc.json src",
         "lint": "oxlint --config .oxlintrc.json src",
         "start": "bun src/server/index.ts"

@@ -109,13 +109,27 @@ export function createSMTPServer(onEmail: (email: Email) => void) {
 
                     const stringify = (v: unknown): string => {
                         if (typeof v === "string") return v;
+                        if (v instanceof Date) return v.toISOString();
 
-                        if (
-                            typeof v === "object" &&
-                            v !== null &&
-                            "text" in v
-                        ) {
-                            return String((v as { text: unknown }).text);
+                        if (typeof v === "object" && v !== null) {
+                            if ("text" in v)
+                                return String((v as { text: unknown }).text);
+
+                            // content-type, content-disposition, etc.
+                            if ("value" in v) {
+                                const obj = v as {
+                                    value: string;
+                                    params?: Record<string, string>;
+                                };
+                                const params = obj.params
+                                    ? Object.entries(obj.params)
+                                          .map(([k, val]) => `${k}=${val}`)
+                                          .join("; ")
+                                    : "";
+                                return params
+                                    ? `${obj.value}; ${params}`
+                                    : obj.value;
+                            }
                         }
 
                         return String(v);

@@ -142,9 +142,9 @@ export function Sidebar({
                                         )}
                                     </div>
 
-                                    {!collapsed && inbox.emailCount > 0 && (
+                                    {!collapsed && inbox.unreadCount > 0 && (
                                         <span className="text-xs text-zinc-400 tabular-nums ml-1">
-                                            {inbox.emailCount}
+                                            {inbox.unreadCount}
                                         </span>
                                     )}
                                 </button>

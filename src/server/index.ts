@@ -9,6 +9,7 @@ import {
     getSession,
     withAuth,
 } from "./http/auth";
+import { configHandler } from "./http/config";
 import {
     emailAttachmentHandler,
     emailByIdHandler,
@@ -49,6 +50,7 @@ const server = Bun.serve({
     port: HTTP_PORT,
     routes: {
         "/*": index,
+        "/api/config": withAuth(configHandler),
         "/api/auth/login": authLoginHandler,
         "/api/auth/logout": authLogoutHandler,
         "/api/auth/setup": authSetupHandler,

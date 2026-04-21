@@ -32,7 +32,9 @@ export const emailByIdHandler = ({ broadcast }: HTTPHandler) => ({
     DELETE(req: BunRequest<"/api/emails/:id">) {
         const deleted = storage.deleteEmail(req.params.id);
 
-        if (!deleted) return new Response("Not found", { status: 404 });
+        if (!deleted) {
+            return new Response("Not found", { status: 404 })
+        };
 
         broadcast({ type: "email_deleted", id: req.params.id });
 
@@ -42,7 +44,9 @@ export const emailByIdHandler = ({ broadcast }: HTTPHandler) => ({
     GET(req: BunRequest<"/api/emails/:id">) {
         const email = storage.getEmail(req.params.id);
 
-        if (!email) return new Response("Not found", { status: 404 });
+        if (!email) {
+            return new Response("Not found", { status: 404 });
+        };
 
         storage.markAsRead(req.params.id);
 
@@ -54,7 +58,9 @@ export const emailRawHandler = {
     GET(req: BunRequest<"/api/emails/:id/raw">) {
         const email = storage.getEmail(req.params.id);
 
-        if (!email) return new Response("Not found", { status: 404 });
+        if (!email) {
+            return new Response("Not found", { status: 404 });
+        };
 
         return new Response(email.raw, {
             headers: { "Content-Type": "text/plain; charset=utf-8" },
@@ -66,22 +72,24 @@ export const emailAttachmentHandler = {
     GET(req: BunRequest<"/api/emails/:id/attachments/:index">) {
         const email = storage.getEmail(req.params.id);
 
-        if (!email) return new Response("Not found", { status: 404 });
+        if (!email) {
+            return new Response("Not found", { status: 404 });
+        };
 
         const idx = parseInt(req.params.index);
-        const att = email.attachments[idx];
+        const attachment = email.attachments[idx];
 
-        if (!att)
+        if (!attachment)
             return new Response("Attachment not found", {
                 status: 404,
             });
 
-        const buf = Buffer.from(att.content, "base64");
+        const buffer = Buffer.from(attachment.content, "base64");
 
-        return new Response(buf, {
+        return new Response(buffer, {
             headers: {
-                "Content-Type": att.contentType,
-                "Content-Disposition": `attachment; filename="${att.filename}"`,
+                "Content-Disposition": `attachment; filename="${attachment.filename}"`,
+                "Content-Type": attachment.contentType,
             },
         });
     },

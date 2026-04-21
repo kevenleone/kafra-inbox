@@ -7,7 +7,7 @@ import {
     Plus,
     Trash2,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { Inbox, SmtpConfig } from "../../../shared/types";
 
 interface SettingsProps {
@@ -99,9 +99,11 @@ function SmtpConfigBlock({ smtp }: { smtp: SmtpConfig }) {
 function InboxCard({
     inbox,
     onDelete,
+    smtpPort
 }: {
     inbox: Inbox;
     onDelete: () => void;
+    smtpPort: number;
 }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -137,6 +139,7 @@ function InboxCard({
                             Delete
                         </button>
                     )}
+
                     {confirmDelete && (
                         <div className="flex items-center gap-1.5">
                             <span className="text-xs text-red-600">Sure?</span>
@@ -147,6 +150,7 @@ function InboxCard({
                                 Yes, delete
                             </button>
                             <button
+                            
                                 onClick={() => setConfirmDelete(false)}
                                 className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
                             >
@@ -157,7 +161,7 @@ function InboxCard({
                 </div>
             </div>
 
-            <SmtpConfigBlock smtp={inbox.smtp} />
+            <SmtpConfigBlock smtp={{...inbox.smtp, port: smtpPort }} />
         </div>
     );
 }
@@ -165,9 +169,11 @@ function InboxCard({
 function NewInboxForm({
     onSubmit,
     onCancel,
+    smtpPort,
 }: {
     onSubmit: (name: string) => Promise<{ error?: string }>;
     onCancel: () => void;
+    smtpPort: number | null;
 }) {
     const [form, setForm] = useState<InboxFormState>({
         name: "",
@@ -219,7 +225,7 @@ function NewInboxForm({
 
                 <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
                     SMTP credentials are generated automatically after creation.
-                    Port stays fixed at 1025.
+                    {smtpPort !== null && ` Port stays fixed at ${smtpPort}.`}
                 </div>
 
                 {error && (
@@ -257,6 +263,14 @@ export function Settings({
     onBack,
 }: SettingsProps) {
     const [addingNew, setAddingNew] = useState(false);
+    const [smtpPort, setSmtpPort] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetch("/api/config")
+            .then((r) => r.json() as Promise<{ smtpPort: number }>)
+            .then((data) => setSmtpPort(data.smtpPort))
+            .catch(console.error);
+    }, []);
 
     const handleCreate = async (name: string) => {
         const result = await onCreateInbox(name);
@@ -304,6 +318,7 @@ export function Settings({
                         <NewInboxForm
                             onSubmit={handleCreate}
                             onCancel={() => setAddingNew(false)}
+                            smtpPort={smtpPort}
                         />
                     )}
 
@@ -313,6 +328,7 @@ export function Settings({
                             key={inbox.id}
                             inbox={inbox}
                             onDelete={() => onDeleteInbox(inbox.id)}
+                            smtpPort={smtpPort as number}
                         />
                     ))}
                 </div>

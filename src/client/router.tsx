@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import App from "./App";
 import { GuestOnly } from "./components/guest-only";
@@ -27,13 +27,17 @@ export function Router() {
                     }
                 />
                 <Route
-                    path="/*"
                     element={
                         <RequireAuth>
                             <App />
                         </RequireAuth>
                     }
-                />
+                >
+                    <Route index element={<Navigate to="/default" replace />} />
+                    <Route path="/settings" />
+                    <Route path="/:inboxId" />
+                    <Route path="/:inboxId/:emailId" />
+                </Route>
             </Routes>
         </BrowserRouter>
     );

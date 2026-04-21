@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Outlet, useMatch, useNavigate, useParams } from "react-router-dom";
 
 import type { Email, Inbox, WsMessage } from "../shared/types";
 import { EmailList } from "./components/email/list";
 import { EmailViewer } from "./components/email/viewer";
 import { Settings } from "./components/ui/settings";
 import { Sidebar } from "./components/ui/sidebar";
-
-type View = "mail" | "settings";
 
 function matchesSearch(email: Email, query: string): boolean {
     const searchQuery = query.toLowerCase();
@@ -21,7 +19,14 @@ function matchesSearch(email: Email, query: string): boolean {
 }
 
 export default function App() {
-    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const { inboxId, emailId } = useParams<{
+        inboxId?: string;
+        emailId?: string;
+    }>();
+    const isSettings = !!useMatch("/settings");
+
+    const selectedInboxId = inboxId ?? "default";
 
     const [connected, setConnected] = useState(false);
     const [emails, setEmails] = useState<Email[]>([]);
@@ -29,30 +34,44 @@ export default function App() {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
     const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
-    const [selectedInboxId, setSelectedInboxId] = useState(
-        () => searchParams.get("inbox") ?? "default",
-    );
     const [total, setTotal] = useState(0);
-    const [view, setView] = useState<View>("mail");
 
+    const emailIdRef = useRef(emailId);
+    const navigateRef = useRef(navigate);
     const searchRef = useRef(search);
     const selectedInboxIdRef = useRef(selectedInboxId);
+    // Tracks last inbox visited so settings "back" returns to the right place
+    const prevInboxIdRef = useRef(selectedInboxId);
     const wsRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
-        selectedInboxIdRef.current = selectedInboxId;
-        setSearchParams(
-            (prev) => {
-                prev.set("inbox", selectedInboxId);
-                return prev;
-            },
-            { replace: true },
-        );
-    }, [selectedInboxId, setSearchParams]);
+        emailIdRef.current = emailId;
+    }, [emailId]);
+
+    useEffect(() => {
+        navigateRef.current = navigate;
+    }, [navigate]);
 
     useEffect(() => {
         searchRef.current = search;
     }, [search]);
+
+    useEffect(() => {
+        selectedInboxIdRef.current = selectedInboxId;
+        if (!isSettings) prevInboxIdRef.current = selectedInboxId;
+    }, [selectedInboxId, isSettings]);
+
+    // ── Browser tab title with unread count ───────────────────────────────────
+    useEffect(() => {
+        const totalUnread = inboxes.reduce(
+            (sum, inbox) => sum + inbox.unreadCount,
+            0,
+        );
+        document.title =
+            totalUnread > 0
+                ? `(${totalUnread}) KafraInbox — Email Sandbox`
+                : "KafraInbox — Email Sandbox";
+    }, [inboxes]);
 
     // ── WebSocket ─────────────────────────────────────────────────────────────
     useEffect(() => {
@@ -100,14 +119,23 @@ export default function App() {
 
                     setTotal((total) => Math.max(0, total - 1));
 
-                    setSelectedEmail((selectedEmail) =>
-                        selectedEmail?.id === msg.id ? null : selectedEmail,
-                    );
+                    if (emailIdRef.current === msg.id) {
+                        navigateRef.current(
+                            `/${selectedInboxIdRef.current}`,
+                            { replace: true },
+                        );
+                    }
                 } else if (msg.type === "inbox_cleared") {
                     if (msg.inboxId === selectedInboxIdRef.current) {
                         setEmails([]);
                         setTotal(0);
-                        setSelectedEmail(null);
+
+                        if (emailIdRef.current) {
+                            navigateRef.current(
+                                `/${selectedInboxIdRef.current}`,
+                                { replace: true },
+                            );
+                        }
                     }
 
                     setInboxes((inboxes) =>
@@ -167,42 +195,64 @@ export default function App() {
             .finally(() => setLoading(false));
     }, [selectedInboxId, search]);
 
+    // ── Fetch email from URL param ────────────────────────────────────────────
+    useEffect(() => {
+        if (!emailId) {
+            setSelectedEmail(null);
+            return;
+        }
+
+        fetch(`/api/emails/${emailId}`)
+            .then((r) => r.json() as Promise<Email>)
+            .then((full) => {
+                setSelectedEmail(full);
+
+                setEmails((prev) => {
+                    const wasUnread =
+                        prev.find((e) => e.id === emailId)?.isRead === false;
+
+                    if (wasUnread) {
+                        setInboxes((inboxes) =>
+                            inboxes.map((inbox) =>
+                                inbox.id === full.inboxId
+                                    ? {
+                                          ...inbox,
+                                          unreadCount: Math.max(
+                                              0,
+                                              inbox.unreadCount - 1,
+                                          ),
+                                      }
+                                    : inbox,
+                            ),
+                        );
+                    }
+
+                    return prev.map((e) =>
+                        e.id === emailId ? { ...e, isRead: true } : e,
+                    );
+                });
+            })
+            .catch(console.error);
+    }, [emailId]);
+
     // ── Handlers ──────────────────────────────────────────────────────────────
-    const handleSelectEmail = useCallback(async (email: Email) => {
-        const full = await fetch(`/api/emails/${email.id}`).then(
-            (response) => response.json() as Promise<Email>,
-        );
-
-        setSelectedEmail(full);
-
-        setEmails((prevEmails) =>
-            prevEmails.map((prevEmail) =>
-                prevEmail.id === email.id
-                    ? { ...prevEmail, isRead: true }
-                    : prevEmail,
-            ),
-        );
-
-        setInboxes((prevInboxes) =>
-            prevInboxes.map((inbox) =>
-                inbox.id === email.inboxId && !email.isRead
-                    ? {
-                          ...inbox,
-                          unreadCount: Math.max(0, inbox.unreadCount - 1),
-                      }
-                    : inbox,
-            ),
-        );
-    }, []);
+    const handleSelectEmail = useCallback(
+        (email: Email) => {
+            navigate(`/${email.inboxId}/${email.id}`);
+        },
+        [navigate],
+    );
 
     const handleDeleteEmail = useCallback(
         async (id: string) => {
             await fetch(`/api/emails/${id}`, { method: "DELETE" });
             setEmails((prev) => prev.filter((e) => e.id !== id));
             setTotal((t) => Math.max(0, t - 1));
-            if (selectedEmail?.id === id) setSelectedEmail(null);
+            if (emailId === id) {
+                navigate(`/${selectedInboxId}`, { replace: true });
+            }
         },
-        [selectedEmail],
+        [emailId, selectedInboxId, navigate],
     );
 
     const handleClearInbox = useCallback(async () => {
@@ -212,7 +262,11 @@ export default function App() {
 
         setEmails([]);
         setTotal(0);
-        setSelectedEmail(null);
+
+        if (emailId) {
+            navigate(`/${selectedInboxId}`, { replace: true });
+        }
+
         setInboxes((prevInboxes) =>
             prevInboxes.map((inbox) =>
                 inbox.id === selectedInboxId
@@ -220,7 +274,7 @@ export default function App() {
                     : inbox,
             ),
         );
-    }, [selectedInboxId]);
+    }, [selectedInboxId, emailId, navigate]);
 
     const handleCreateInbox = useCallback(
         async (name: string): Promise<{ error?: string }> => {
@@ -252,10 +306,10 @@ export default function App() {
             );
 
             if (selectedInboxId === id) {
-                setSelectedInboxId("default");
+                navigate("/default", { replace: true });
             }
         },
-        [selectedInboxId],
+        [selectedInboxId, navigate],
     );
 
     const selectedInbox = inboxes.find((i) => i.id === selectedInboxId);
@@ -263,21 +317,18 @@ export default function App() {
     return (
         <div className="flex h-screen overflow-hidden">
             <Sidebar
-                activeView={view}
+                activeView={isSettings ? "settings" : "mail"}
                 connected={connected}
                 inboxes={inboxes}
                 selectedInboxId={selectedInboxId}
-                onOpenSettings={() => setView("settings")}
-                onSelectInbox={(id) => {
-                    setSelectedInboxId(id);
-                    setView("mail");
-                }}
+                onOpenSettings={() => navigate("/settings")}
+                onSelectInbox={(id) => navigate(`/${id}`)}
             />
 
-            {view === "settings" ? (
+            {isSettings ? (
                 <Settings
                     inboxes={inboxes}
-                    onBack={() => setView("mail")}
+                    onBack={() => navigate(`/${prevInboxIdRef.current}`)}
                     onCreateInbox={handleCreateInbox}
                     onDeleteInbox={handleDeleteInbox}
                 />
@@ -292,13 +343,15 @@ export default function App() {
                         onSearch={setSearch}
                         onSelectEmail={handleSelectEmail}
                         search={search}
-                        selectedId={selectedEmail?.id}
+                        selectedId={emailId}
                         total={total}
                     />
 
                     <EmailViewer email={selectedEmail} />
                 </>
             )}
+
+            <Outlet />
         </div>
     );
 }

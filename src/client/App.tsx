@@ -198,14 +198,13 @@ export default function App() {
     // ── Fetch email from URL param ────────────────────────────────────────────
     useEffect(() => {
         if (!emailId) {
-            setSelectedEmail(null);
-            return;
+            return setSelectedEmail(null);
         }
 
         fetch(`/api/emails/${emailId}`)
-            .then((r) => r.json() as Promise<Email>)
-            .then((full) => {
-                setSelectedEmail(full);
+            .then((response) => response.json() as Promise<Email>)
+            .then((fullEmail) => {
+                setSelectedEmail(fullEmail);
 
                 setEmails((prev) => {
                     const wasUnread =
@@ -214,7 +213,7 @@ export default function App() {
                     if (wasUnread) {
                         setInboxes((inboxes) =>
                             inboxes.map((inbox) =>
-                                inbox.id === full.inboxId
+                                inbox.id === fullEmail.inboxId
                                     ? {
                                           ...inbox,
                                           unreadCount: Math.max(
@@ -235,7 +234,6 @@ export default function App() {
             .catch(console.error);
     }, [emailId]);
 
-    // ── Handlers ──────────────────────────────────────────────────────────────
     const handleSelectEmail = useCallback(
         (email: Email) => {
             navigate(`/${email.inboxId}/${email.id}`);

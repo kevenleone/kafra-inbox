@@ -39,6 +39,10 @@ export function EmailList({
     selectedId,
     total,
 }: EmailListProps) {
+    const selectedIndex = emails.findIndex((e) => e.id === selectedId);
+    const prevEmail = selectedIndex > 0 ? emails[selectedIndex - 1] : null;
+    const nextEmail = selectedIndex >= 0 && selectedIndex < emails.length - 1 ? emails[selectedIndex + 1] : null;
+
     return (
         <div className="w-96 flex-shrink-0 border-r border-gray-200 flex flex-col h-screen bg-white">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
@@ -68,11 +72,21 @@ export function EmailList({
                     </span>
 
                     <div className="flex items-center gap-0.5">
-                        <button className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors">
+                        <button
+                            className="p-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-300 hover:text-gray-500 hover:bg-gray-100 disabled:hover:text-gray-300 disabled:hover:bg-transparent"
+                            disabled={!prevEmail}
+                            onClick={() => prevEmail && onSelectEmail(prevEmail)}
+                            title="Previous email"
+                        >
                             <ChevronLeft className="w-3.5 h-3.5" />
                         </button>
 
-                        <button className="p-1 rounded text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-colors">
+                        <button
+                            className="p-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-gray-300 hover:text-gray-500 hover:bg-gray-100 disabled:hover:text-gray-300 disabled:hover:bg-transparent"
+                            disabled={!nextEmail}
+                            onClick={() => nextEmail && onSelectEmail(nextEmail)}
+                            title="Next email"
+                        >
                             <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                     </div>

@@ -24,18 +24,51 @@ import { environment } from "./utils/environment";
 const HTTP_PORT = environment.KAFRAINBOX_HTTP_SERVER_PORT;
 const SMTP_PORT = environment.KAFRAINBOX_SMTP_SERVER_PORT;
 
-const wsClients = new Set<{ send: (message: string) => void }>();
+const sseClients = new Set<ReadableStreamDefaultController<string>>();
 
 function broadcast(message: WsMessage) {
-    const payload = JSON.stringify(message);
+    const data = `data: ${JSON.stringify(message)}\n\n`;
 
-    for (const ws of wsClients) {
+    for (const ctrl of sseClients) {
         try {
-            ws.send(payload);
+            ctrl.enqueue(data);
         } catch {
-            wsClients.delete(ws);
+            sseClients.delete(ctrl);
         }
     }
+}
+
+function sseHandler(req: Request): Response {
+    if (!environment.KAFRAINBOX_DANGEROUSLY_NO_AUTH && !getSession(req)) {
+        return new Response("Unauthorized", { status: 401 });
+    }
+
+    let controller: ReadableStreamDefaultController<string>;
+
+    const stream = new ReadableStream<string>({
+        start(ctrl) {
+            controller = ctrl;
+            sseClients.add(ctrl);
+            console.log(`[SSE] Client connected (total: ${sseClients.size})`);
+            ctrl.enqueue(
+                `data: ${JSON.stringify({ type: "connected" } satisfies WsMessage)}\n\n`,
+            );
+        },
+        cancel() {
+            sseClients.delete(controller);
+            console.log(
+                `[SSE] Client disconnected (total: ${sseClients.size})`,
+            );
+        },
+    });
+
+    return new Response(stream, {
+        headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+        },
+    });
 }
 
 const httpHandler = {
@@ -63,37 +96,7 @@ const server = Bun.serve({
         "/api/inboxes/:id": withAuth(inboxByIdHandler(httpHandler)),
         "/api/rules": withAuth(rulesHandler),
         "/api/rules/:id": withAuth(ruleByIdHandler),
-        "/ws"(req) {
-            if (
-                !environment.KAFRAINBOX_DANGEROUSLY_NO_AUTH &&
-                !getSession(req)
-            ) {
-                return new Response("Unauthorized", { status: 401 });
-            }
-
-            const success = server.upgrade(req);
-
-            if (!success) {
-                return new Response("WebSocket upgrade failed", {
-                    status: 500,
-                });
-            }
-        },
-    },
-    websocket: {
-        open(ws) {
-            wsClients.add(ws);
-
-            console.log(`[WS] Client connected (total: ${wsClients.size})`);
-
-            ws.send(JSON.stringify({ type: "connected" } satisfies WsMessage));
-        },
-        message(_ws, _message) {},
-        close(ws) {
-            wsClients.delete(ws);
-
-            console.log(`[WS] Client disconnected (total: ${wsClients.size})`);
-        },
+        "/sse": sseHandler,
     },
 });
 

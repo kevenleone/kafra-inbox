@@ -42,7 +42,7 @@ export default function App() {
     const selectedInboxIdRef = useRef(selectedInboxId);
     // Tracks last inbox visited so settings "back" returns to the right place
     const prevInboxIdRef = useRef(selectedInboxId);
-    const wsRef = useRef<WebSocket | null>(null);
+    const esRef = useRef<EventSource | null>(null);
 
     useEffect(() => {
         emailIdRef.current = emailId;
@@ -73,92 +73,80 @@ export default function App() {
                 : "KafraInbox — Email Sandbox";
     }, [inboxes]);
 
-    // ── WebSocket ─────────────────────────────────────────────────────────────
+    // ── SSE ───────────────────────────────────────────────────────────────────
     useEffect(() => {
-        function connect() {
-            const protocol = location.protocol === "https:" ? "wss:" : "ws:";
+        const es = new EventSource("/sse");
 
-            const ws = new WebSocket(`${protocol}//${location.host}/ws`);
+        esRef.current = es;
 
-            wsRef.current = ws;
+        es.onopen = () => setConnected(true);
+        es.onerror = () => setConnected(false);
 
-            ws.onopen = () => setConnected(true);
+        es.onmessage = (event: MessageEvent<string>) => {
+            const msg = JSON.parse(event.data) as WsMessage;
 
-            ws.onmessage = (event: MessageEvent<string>) => {
-                const msg = JSON.parse(event.data) as WsMessage;
+            if (msg.type === "new_email") {
+                setEmails((prev) => {
+                    if (msg.email.inboxId !== selectedInboxIdRef.current)
+                        return prev;
+                    if (
+                        searchRef.current &&
+                        !matchesSearch(msg.email, searchRef.current)
+                    )
+                        return prev;
+                    return [msg.email, ...prev];
+                });
 
-                if (msg.type === "new_email") {
-                    setEmails((prev) => {
-                        if (msg.email.inboxId !== selectedInboxIdRef.current)
-                            return prev;
-                        if (
-                            searchRef.current &&
-                            !matchesSearch(msg.email, searchRef.current)
-                        )
-                            return prev;
-                        return [msg.email, ...prev];
+                setTotal((total) => total + 1);
+
+                setInboxes((prev) =>
+                    prev.map((inbox) =>
+                        inbox.id === msg.email.inboxId
+                            ? {
+                                  ...inbox,
+                                  emailCount: inbox.emailCount + 1,
+                                  unreadCount: inbox.unreadCount + 1,
+                              }
+                            : inbox,
+                    ),
+                );
+            } else if (msg.type === "email_deleted") {
+                setEmails((emails) =>
+                    emails.filter((email) => email.id !== msg.id),
+                );
+
+                setTotal((total) => Math.max(0, total - 1));
+
+                if (emailIdRef.current === msg.id) {
+                    navigateRef.current(`/${selectedInboxIdRef.current}`, {
+                        replace: true,
                     });
+                }
+            } else if (msg.type === "inbox_cleared") {
+                if (msg.inboxId === selectedInboxIdRef.current) {
+                    setEmails([]);
+                    setTotal(0);
 
-                    setTotal((total) => total + 1);
-
-                    setInboxes((prev) =>
-                        prev.map((inbox) =>
-                            inbox.id === msg.email.inboxId
-                                ? {
-                                      ...inbox,
-                                      emailCount: inbox.emailCount + 1,
-                                      unreadCount: inbox.unreadCount + 1,
-                                  }
-                                : inbox,
-                        ),
-                    );
-                } else if (msg.type === "email_deleted") {
-                    setEmails((emails) =>
-                        emails.filter((email) => email.id !== msg.id),
-                    );
-
-                    setTotal((total) => Math.max(0, total - 1));
-
-                    if (emailIdRef.current === msg.id) {
+                    if (emailIdRef.current) {
                         navigateRef.current(
                             `/${selectedInboxIdRef.current}`,
                             { replace: true },
                         );
                     }
-                } else if (msg.type === "inbox_cleared") {
-                    if (msg.inboxId === selectedInboxIdRef.current) {
-                        setEmails([]);
-                        setTotal(0);
-
-                        if (emailIdRef.current) {
-                            navigateRef.current(
-                                `/${selectedInboxIdRef.current}`,
-                                { replace: true },
-                            );
-                        }
-                    }
-
-                    setInboxes((inboxes) =>
-                        inboxes.map((inbox) =>
-                            inbox.id === msg.inboxId
-                                ? { ...inbox, emailCount: 0, unreadCount: 0 }
-                                : inbox,
-                        ),
-                    );
                 }
-            };
 
-            ws.onclose = () => {
-                setConnected(false);
-                setTimeout(connect, 3000);
-            };
+                setInboxes((inboxes) =>
+                    inboxes.map((inbox) =>
+                        inbox.id === msg.inboxId
+                            ? { ...inbox, emailCount: 0, unreadCount: 0 }
+                            : inbox,
+                    ),
+                );
+            }
+        };
 
-            ws.onerror = () => ws.close();
-        }
-
-        connect();
         return () => {
-            wsRef.current?.close();
+            esRef.current?.close();
         };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
